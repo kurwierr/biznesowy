@@ -318,6 +318,80 @@
     ::-webkit-scrollbar { width:4px; }
     ::-webkit-scrollbar-track { background:transparent; }
     ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:10px; }
+
+    /* ── VOLUME OVERLAY ── */
+    #vol-overlay {
+      position:absolute; inset:0; z-index:15;
+      display:none; align-items:flex-end; justify-content:center;
+      padding-bottom:60px; pointer-events:none;
+    }
+    #vol-overlay.active { display:flex; }
+
+    /* transparent click-catcher covering full player */
+    #vol-click-block {
+      position:absolute; inset:0; z-index:14;
+      display:none; cursor:default;
+    }
+    #vol-click-block.active { display:block; }
+
+    .vol-slider-wrap {
+      pointer-events:all;
+      display:flex; align-items:center; gap:10px;
+      background:rgba(14,14,14,0.82); backdrop-filter:blur(10px);
+      border:1px solid var(--border); border-radius:30px;
+      padding:10px 18px; box-shadow:0 8px 32px rgba(0,0,0,.6);
+    }
+    .vol-icon { color:var(--text2); display:flex; align-items:center; flex-shrink:0; }
+
+    input[type=range]#vol-range {
+      -webkit-appearance:none; appearance:none;
+      width:140px; height:4px;
+      background: linear-gradient(to right, #fff var(--val,70%), var(--bg3) var(--val,70%));
+      border-radius:2px; outline:none; cursor:pointer;
+    }
+    input[type=range]#vol-range::-webkit-slider-thumb {
+      -webkit-appearance:none; width:14px; height:14px;
+      border-radius:50%; background:#fff; cursor:pointer;
+      box-shadow:0 0 4px rgba(0,0,0,.5);
+    }
+    .vol-pct { font-size:12px; color:var(--text2); width:30px; text-align:right; }
+
+    /* ── PLAYLIST POPUP ── */
+    #playlist-panel {
+      width:260px; flex-shrink:0; background:var(--bg2);
+      border-left:1px solid var(--border2);
+      display:flex; flex-direction:column;
+      transition: width .25s ease, opacity .25s ease;
+    }
+    #playlist-panel.hidden {
+      width:0; opacity:0; overflow:hidden; pointer-events:none;
+      border-left:none;
+    }
+
+    /* ── TWITCH CHAT PANEL ── */
+    #twitch-panel {
+      width:300px; flex-shrink:0; background:var(--bg2);
+      border-left:1px solid var(--border2);
+      display:none; flex-direction:column;
+    }
+    #twitch-panel.visible { display:flex; }
+    #twitch-panel iframe { flex:1; border:none; }
+    .twitch-header {
+      padding:10px 14px; border-bottom:1px solid var(--border2);
+      display:flex; align-items:center; justify-content:space-between;
+      flex-shrink:0;
+    }
+    .twitch-title { font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.8px; font-weight:600; }
+
+    /* ── TOPBAR TOGGLE BUTTONS ── */
+    .topbar-icon-btn {
+      background:none; border:1px solid var(--border2);
+      border-radius:var(--radius-sm); padding:5px 9px;
+      color:var(--text3); cursor:pointer; transition:all .18s;
+      display:flex; align-items:center; font-size:13px; flex-shrink:0;
+    }
+    .topbar-icon-btn:hover { border-color:var(--border); color:var(--text); background:var(--dim); }
+    .topbar-icon-btn.active { border-color:var(--border); color:var(--text); background:var(--dim); }
   </style>
 </head>
 <body>
@@ -430,8 +504,23 @@
         <p>Brak aktywnego filmu</p>
       </div>
       <iframe id="player-frame" allowfullscreen allow="autoplay; fullscreen"></iframe>
-      <!-- seek blocker: covers ~bottom 52px where YT progress bar lives -->
       <div id="sync-indicator">⟳ Synchronizowanie...</div>
+      <!-- volume click-blocker (covers whole player, blocks seek) -->
+      <div id="vol-click-block"></div>
+      <!-- volume slider overlay -->
+      <div id="vol-overlay">
+        <div class="vol-slider-wrap">
+          <div class="vol-icon">
+            <svg id="vol-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <path id="vol-wave1" d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+              <path id="vol-wave2" d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            </svg>
+          </div>
+          <input type="range" id="vol-range" min="0" max="100" value="70" oninput="onVolChange(this.value)" />
+          <span class="vol-pct" id="vol-pct">70%</span>
+        </div>
+      </div>
     </div>
 
     <!-- BOTTOM BAR -->
@@ -456,6 +545,33 @@
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,4 15,12 5,20"/><rect x="16" y="4" width="3" height="16"/></svg>
         Pomiń
       </button>
+
+      <div style="flex:1"></div>
+
+      <!-- volume toggle -->
+      <button class="ctrl-btn" id="btn-vol" onclick="toggleVolOverlay()" title="Głośność">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+      </button>
+
+      <!-- playlist toggle -->
+      <button class="topbar-icon-btn active" id="btn-toggle-playlist" onclick="togglePlaylist()" title="Kolejka">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+          <line x1="8" y1="18" x2="21" y2="18"/>
+          <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
+          <line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+      </button>
+
+      <!-- twitch toggle -->
+      <button class="topbar-icon-btn" id="btn-toggle-twitch" onclick="toggleTwitch()" title="Twitch">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M11.64 5.93h1.43v4.28h-1.43m3.93-4.28H17v4.28h-1.43M7 2L3.43 5.57v12.86h4.28V22l3.58-3.57h2.85L20.57 12V2m-1.43 9.29l-2.85 2.85h-2.86l-2.5 2.5v-2.5H7.71V3.43h11.43z"/>
+        </svg>
+      </button>
     </div>
 
     <!-- STATUS BAR -->
@@ -474,6 +590,15 @@
     <div class="playlist-list" id="playlist-list">
       <div class="playlist-empty">Kolejka jest pusta.<br>Dodaj film, żeby zacząć.</div>
     </div>
+  </div>
+
+  <!-- TWITCH CHAT PANEL -->
+  <div id="twitch-panel">
+    <div class="twitch-header">
+      <span class="twitch-title">Twitch Chat</span>
+      <button class="topbar-icon-btn" onclick="toggleTwitch()" style="padding:3px 7px;font-size:11px;">✕</button>
+    </div>
+    <iframe id="twitch-chat-frame" src="" allowfullscreen></iframe>
   </div>
 
 </div><!-- #app -->
@@ -855,6 +980,7 @@
     frame.onload = () => {
       hostTime = 0;
       startSyncPolling();
+      applyStoredVolume();
     };
   }
 
@@ -1012,6 +1138,127 @@
 
   function escHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ── VOLUME OVERLAY ── */
+  const VOL_KEY = 'biznesowy_vol';
+
+  function initVolume() {
+    const saved = parseInt(localStorage.getItem(VOL_KEY) || '70', 10);
+    applyVolume(saved, false);
+  }
+
+  function onVolChange(val) {
+    val = parseInt(val, 10);
+    applyVolume(val, true);
+    localStorage.setItem(VOL_KEY, val);
+  }
+  window.onVolChange = onVolChange;
+
+  function applyVolume(val, fromSlider) {
+    const range = document.getElementById('vol-range');
+    const pct   = document.getElementById('vol-pct');
+    if (!fromSlider) range.value = val;
+    range.style.setProperty('--val', val + '%');
+    pct.textContent = val + '%';
+    // Send to YT iframe
+    const frame = document.getElementById('player-frame');
+    if (frame && frame.style.display !== 'none') {
+      try {
+        frame.contentWindow.postMessage(
+          JSON.stringify({event:'command', func:'setVolume', args:[val]}), '*'
+        );
+        if (val === 0) {
+          frame.contentWindow.postMessage(
+            JSON.stringify({event:'command', func:'mute', args:[]}), '*'
+          );
+        } else {
+          frame.contentWindow.postMessage(
+            JSON.stringify({event:'command', func:'unMute', args:[]}), '*'
+          );
+        }
+      } catch {}
+    }
+    // update icon
+    updateVolIcon(val);
+  }
+
+  function updateVolIcon(val) {
+    const w1 = document.getElementById('vol-wave1');
+    const w2 = document.getElementById('vol-wave2');
+    if (!w1) return;
+    if (val === 0) { w1.style.display='none'; w2.style.display='none'; }
+    else if (val < 50) { w1.style.display=''; w2.style.display='none'; }
+    else { w1.style.display=''; w2.style.display=''; }
+  }
+
+  let volOverlayOpen = false;
+  window.toggleVolOverlay = function() {
+    volOverlayOpen = !volOverlayOpen;
+    document.getElementById('vol-overlay').classList.toggle('active', volOverlayOpen);
+    document.getElementById('vol-click-block').classList.toggle('active', volOverlayOpen);
+    document.getElementById('btn-vol').classList.toggle('active', volOverlayOpen);
+    // Re-apply volume when opening so YT gets it after load
+    if (volOverlayOpen) {
+      const val = parseInt(document.getElementById('vol-range').value, 10);
+      applyVolume(val, true);
+    }
+  };
+
+  // Apply saved volume whenever a new video loads
+  function applyStoredVolume() {
+    const val = parseInt(localStorage.getItem(VOL_KEY) || '70', 10);
+    setTimeout(() => applyVolume(val, false), 1200);
+  }
+
+  /* ── PLAYLIST TOGGLE ── */
+  let playlistVisible = true;
+  window.togglePlaylist = function() {
+    playlistVisible = !playlistVisible;
+    document.getElementById('playlist-panel').classList.toggle('hidden', !playlistVisible);
+    document.getElementById('btn-toggle-playlist').classList.toggle('active', playlistVisible);
+  };
+
+  /* ── TWITCH ── */
+  let twitchVisible = false;
+  let twitchChannel = null;
+
+  window.toggleTwitch = function() {
+    if (!twitchVisible && !twitchChannel) {
+      const ch = prompt('Podaj nazwę kanału Twitch (np. xqc):');
+      if (!ch || !ch.trim()) return;
+      twitchChannel = ch.trim().toLowerCase();
+      loadTwitch(twitchChannel);
+    }
+    twitchVisible = !twitchVisible;
+    document.getElementById('twitch-panel').classList.toggle('visible', twitchVisible);
+    document.getElementById('btn-toggle-twitch').classList.toggle('active', twitchVisible);
+  };
+
+  function loadTwitch(channel) {
+    const hostname = location.hostname || 'localhost';
+    const frame = document.getElementById('twitch-chat-frame');
+    // Twitch embed player (stream)
+    const playerFrame = document.createElement('iframe');
+    playerFrame.id = 'twitch-stream-frame';
+    playerFrame.allowFullscreen = true;
+    playerFrame.src = `https://player.twitch.tv/?channel=${channel}&parent=${hostname}&muted=false`;
+    playerFrame.style.cssText = 'flex:1;border:none;min-height:0;';
+
+    // Twitch chat
+    frame.src = `https://www.twitch.tv/embed/${channel}/chat?parent=${hostname}&darkpopout`;
+
+    // Inject stream player above chat in twitch panel
+    const panel = document.getElementById('twitch-panel');
+    const existing = document.getElementById('twitch-stream-frame');
+    if (existing) existing.remove();
+
+    // Insert stream frame between header and chat
+    const header = panel.querySelector('.twitch-header');
+    // stream takes 55% of panel height, chat 45%
+    playerFrame.style.cssText = 'width:100%;height:55%;border:none;flex-shrink:0;';
+    frame.style.cssText = 'width:100%;flex:1;border:none;min-height:0;';
+    header.insertAdjacentElement('afterend', playerFrame);
   }
 
   /* ── KEYBOARD ── */
