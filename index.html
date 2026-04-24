@@ -198,7 +198,7 @@
 
     /* seek blocker overlay */
     #seek-blocker {
-      position:absolute; bottom:0; left:0; right:0; height:52px;
+      position:absolute; bottom:0; left:0; right:0; height:8px;
       z-index:10; cursor:not-allowed; display:none;
     }
     #seek-blocker.active { display:block; }
@@ -708,7 +708,7 @@
         document.getElementById('btn-play').disabled  = !viewerPauseEnabled;
       }
 
-      // seek blocker — always on for viewers, and for everyone when frame is loaded
+      // seek blocker — viewers only
       updateSeekBlocker();
     });
   }
@@ -875,8 +875,9 @@
     const frame   = document.getElementById('player-frame');
     const blocker = document.getElementById('seek-blocker');
     if (frame.style.display==='none') { blocker.classList.remove('active'); return; }
-    // Always block progress-bar area for everyone
-    blocker.classList.add('active');
+    // Only block for viewers, host can seek freely
+    if (myRole === 'viewer') blocker.classList.add('active');
+    else blocker.classList.remove('active');
   }
 
   function doPlay() {
