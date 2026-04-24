@@ -196,13 +196,6 @@
     .player-placeholder svg { width:52px; height:52px; opacity:.15; }
     .player-placeholder p { font-size:14px; max-width:260px; line-height:1.7; font-weight:300; }
 
-    /* seek blocker overlay */
-    #seek-blocker {
-      position:absolute; bottom:0; left:0; right:0; height:8px;
-      z-index:10; cursor:not-allowed; display:none;
-    }
-    #seek-blocker.active { display:block; }
-
     /* ── SYNC INDICATOR ── */
     #sync-indicator {
       position:absolute; top:12px; left:50%; transform:translateX(-50%);
@@ -438,7 +431,6 @@
       </div>
       <iframe id="player-frame" allowfullscreen allow="autoplay; fullscreen"></iframe>
       <!-- seek blocker: covers ~bottom 52px where YT progress bar lives -->
-      <div id="seek-blocker" title="Seekowanie zablokowane"></div>
       <div id="sync-indicator">⟳ Synchronizowanie...</div>
     </div>
 
@@ -709,8 +701,7 @@
       }
 
       // seek blocker — viewers only
-      updateSeekBlocker();
-    });
+      });
   }
 
   /* ── PLAYLIST LISTENER ── */
@@ -860,24 +851,83 @@
     frame.src = embedUrl;
     frame.style.display = 'block';
     document.getElementById('player-placeholder').style.display = 'none';
-    updateSeekBlocker();
+    // Start sync polling once player is loaded
+    frame.onload = () => {
+      hostTime = 0;
+      startSyncPolling();
+    };
   }
 
   function clearPlayer() {
+    stopSyncPolling();
     const frame = document.getElementById('player-frame');
     frame.src = '';
     frame.style.display = 'none';
     document.getElementById('player-placeholder').style.display = 'flex';
-    document.getElementById('seek-blocker').classList.remove('active');
   }
 
-  function updateSeekBlocker() {
-    const frame   = document.getElementById('player-frame');
-    const blocker = document.getElementById('seek-blocker');
-    if (frame.style.display==='none') { blocker.classList.remove('active'); return; }
-    // Only block for viewers, host can seek freely
-    if (myRole === 'viewer') blocker.classList.add('active');
-    else blocker.classList.remove('active');
+
+  /* ── TIME SYNC ── */
+  // Host keeps a local JS timer counting playback position.
+  // Every 2s it writes that position to Firebase.
+  // Viewers check Firebase every 2s; if diff > 4s they seek to host position.
+  // When host uses seek buttons (+/-10s) the exact time is also written immediately.
+
+  let hostTimer     = null;  // interval that ticks hostTime up
+  let hostTime      = 0;     // seconds, tracked locally on host
+  let syncInterval  = null;
+  let playerStartedAt = null; // wall-clock ms when current play segment started
+
+  function startSyncPolling() {
+    stopSyncPolling();
+
+    if (myRole === 'host') {
+      syncInterval = setInterval(() => {
+        if (isPlaying && hostTime >= 0) {
+          update(ref(db, 'room'), { syncTime: hostTime, syncTs: Date.now() });
+        }
+      }, 2000);
+
+    } else {
+      // Viewer polling
+      syncInterval = setInterval(async () => {
+        if (!isPlaying) return;
+        const frame = document.getElementById('player-frame');
+        if (!frame || frame.style.display === 'none') return;
+        try {
+          const snap = await get(ref(db, 'room'));
+          const d = snap.val();
+          if (!d || d.syncTime == null) return;
+          // Estimate host's current position accounting for network delay
+          const elapsed = (Date.now() - (d.syncTs || Date.now())) / 1000;
+          const estimated = d.syncTime + (d.isPlaying ? elapsed : 0);
+          // We don't know viewer's exact time, so always jump to estimated host time
+          // Only do it if we haven't synced very recently (avoid seek loop)
+          const now = Date.now();
+          if (!window._lastViewerSync || now - window._lastViewerSync > 4000) {
+            frame.contentWindow.postMessage(
+              JSON.stringify({event:'command', func:'seekTo', args:[estimated, true]}), '*'
+            );
+            window._lastViewerSync = now;
+            showSync();
+          }
+        } catch {}
+      }, 4000);
+    }
+  }
+
+  function stopSyncPolling() {
+    if (syncInterval) { clearInterval(syncInterval); syncInterval = null; }
+    if (hostTimer)    { clearInterval(hostTimer);    hostTimer = null; }
+  }
+
+  // Called whenever host play state changes
+  function hostStartTimer(fromTime) {
+    if (hostTimer) clearInterval(hostTimer);
+    hostTime = fromTime;
+    if (isPlaying) {
+      hostTimer = setInterval(() => { hostTime += 0.25; }, 250);
+    }
   }
 
   function doPlay() {
@@ -885,6 +935,7 @@
     if (!frame || frame.style.display==='none') return;
     try { frame.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}','*'); } catch {}
     setStatus('▶ Odtwarzanie','green');
+    if (myRole === 'host') hostStartTimer(hostTime);
   }
 
   function doPause() {
@@ -892,12 +943,14 @@
     if (!frame || frame.style.display==='none') return;
     try { frame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}','*'); } catch {}
     setStatus('⏸ Pauza','yellow');
+    if (myRole === 'host') { if (hostTimer) { clearInterval(hostTimer); hostTimer = null; } }
   }
 
   function doSeekTo(s) {
     const frame = document.getElementById('player-frame');
     if (!frame || frame.style.display==='none') return;
     try { frame.contentWindow.postMessage(`{"event":"command","func":"seekTo","args":[${s},true]}`,'*'); } catch {}
+    if (myRole === 'host') hostStartTimer(s);
     showSync();
   }
 
