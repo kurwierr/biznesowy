@@ -26,362 +26,326 @@
       --radius:  12px;
       --radius-sm: 7px;
     }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Outfit',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow:hidden; }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
+    @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes spin    { to{transform:rotate(360deg)} }
+    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.35} }
 
-    body {
-      font-family: 'Outfit', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes spin    { to { transform: rotate(360deg); } }
-    @keyframes pulse-dot { 0%,100%{opacity:1}50%{opacity:0.35} }
-
-    /* ─── MODAL ─── */
+    /* ── MODAL ── */
     #modal-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.9);
-      backdrop-filter: blur(10px);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 1000;
-      animation: fadeIn 0.25s ease;
+      position:fixed; inset:0; background:rgba(0,0,0,.9);
+      backdrop-filter:blur(10px); display:flex;
+      align-items:center; justify-content:center;
+      z-index:1000; animation:fadeIn .25s ease;
     }
-
     .modal-box {
-      background: var(--card);
-      border: 1px solid var(--border2);
-      border-radius: 18px;
-      padding: 44px 50px;
-      width: 100%;
-      max-width: 440px;
-      animation: slideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-      box-shadow: 0 40px 100px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.04);
-      position: relative;
+      background:var(--card); border:1px solid var(--border2);
+      border-radius:18px; padding:44px 50px; width:100%; max-width:420px;
+      animation:slideUp .3s cubic-bezier(.22,1,.36,1);
+      box-shadow:0 40px 100px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.04);
+      position:relative;
     }
-
     .modal-box::before {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+      content:''; position:absolute; top:0; left:0; right:0; height:1px;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);
     }
-
     .modal-logo {
-      font-family: 'Outfit', sans-serif;
-      font-size: 24px;
-      font-weight: 300;
-      letter-spacing: 5px;
-      text-transform: uppercase;
-      text-align: center;
-      color: #ffffff;
-      margin-bottom: 6px;
+      font-family:'Outfit',sans-serif; font-size:24px; font-weight:300;
+      letter-spacing:5px; text-transform:uppercase; text-align:center;
+      color:#fff; margin-bottom:36px;
     }
 
-    .modal-subtitle {
-      text-align: center;
-      color: var(--text3);
-      font-size: 12px;
-      margin-bottom: 34px;
+    /* saved nicks */
+    .saved-nicks { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+    .nick-chip {
+      background:var(--bg3); border:1px solid var(--border2);
+      border-radius:20px; padding:4px 11px; font-size:12px;
+      color:var(--text2); cursor:pointer; transition:all .15s;
     }
+    .nick-chip:hover { border-color:var(--border); color:var(--text); }
 
-    /* ─── ROLE GRID ─── */
-    .role-grid {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 10px; margin-bottom: 26px;
-    }
-
+    /* role grid */
+    .role-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:26px; }
     .role-btn {
-      background: var(--bg3);
-      border: 1px solid var(--border2);
-      border-radius: var(--radius);
-      padding: 20px 14px;
-      cursor: pointer;
-      transition: all 0.18s ease;
-      display: flex; flex-direction: column; align-items: center; gap: 10px;
-      color: var(--text3);
-      font-family: 'Outfit', sans-serif;
+      background:var(--bg3); border:1px solid var(--border2);
+      border-radius:var(--radius); padding:20px 14px; cursor:pointer;
+      transition:all .18s; display:flex; flex-direction:column;
+      align-items:center; gap:10px; color:var(--text3); font-family:'Outfit',sans-serif;
     }
-    .role-btn:hover, .role-btn.active {
-      border-color: var(--border);
-      background: var(--dim);
-      color: var(--text);
-      transform: translateY(-1px);
+    .role-btn:hover,.role-btn.active {
+      border-color:var(--border); background:var(--dim);
+      color:var(--text); transform:translateY(-1px);
     }
-    .role-btn svg { width: 26px; height: 26px; }
-    .role-btn span { font-size: 13px; font-weight: 500; letter-spacing: 0.3px; }
+    .role-btn svg { width:26px; height:26px; }
+    .role-btn span { font-size:13px; font-weight:500; letter-spacing:.3px; }
 
-    /* ─── INPUTS ─── */
-    .input-group { margin-bottom: 14px; }
-
-    .input-label {
-      display: block; font-size: 11px; color: var(--text3);
-      margin-bottom: 6px; letter-spacing: 0.8px;
-      text-transform: uppercase; font-weight: 500;
-    }
-
+    /* inputs */
+    .input-group { margin-bottom:14px; }
+    .input-label { display:block; font-size:11px; color:var(--text3); margin-bottom:6px; letter-spacing:.8px; text-transform:uppercase; font-weight:500; }
     .input-field {
-      width: 100%; background: var(--bg);
-      border: 1px solid var(--border2); border-radius: var(--radius-sm);
-      padding: 11px 14px; color: var(--text);
-      font-family: 'Outfit', sans-serif; font-size: 14px;
-      transition: border-color 0.18s; outline: none;
+      width:100%; background:var(--bg); border:1px solid var(--border2);
+      border-radius:var(--radius-sm); padding:11px 14px; color:var(--text);
+      font-family:'Outfit',sans-serif; font-size:14px; transition:border-color .18s; outline:none;
     }
-    .input-field:focus { border-color: var(--border); }
-    .input-field::placeholder { color: var(--text3); }
+    .input-field:focus { border-color:var(--border); }
+    .input-field::placeholder { color:var(--text3); }
 
-    /* ─── BUTTONS ─── */
     .btn-primary {
-      width: 100%; background: #fff; border: none;
-      border-radius: var(--radius-sm); padding: 12px;
-      color: #000; font-family: 'Outfit', sans-serif;
-      font-size: 14px; font-weight: 600; cursor: pointer;
-      transition: all 0.18s; margin-top: 8px;
+      width:100%; background:#fff; border:none; border-radius:var(--radius-sm);
+      padding:12px; color:#000; font-family:'Outfit',sans-serif;
+      font-size:14px; font-weight:600; cursor:pointer; transition:all .18s; margin-top:8px;
     }
-    .btn-primary:hover { background: #e5e5e5; }
-    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-primary:hover { background:#e5e5e5; }
+    .btn-primary:disabled { opacity:.35; cursor:not-allowed; }
 
-    .error-msg {
-      color: var(--error); font-size: 12px;
-      margin-top: 10px; text-align: center; min-height: 18px;
-    }
-
+    .error-msg { color:var(--error); font-size:12px; margin-top:10px; text-align:center; min-height:18px; }
     .spinner {
-      width: 14px; height: 14px;
-      border: 2px solid rgba(0,0,0,0.2); border-top-color: #000;
-      border-radius: 50%; animation: spin 0.7s linear infinite;
-      display: inline-block; vertical-align: middle; margin-right: 7px;
+      width:14px; height:14px; border:2px solid rgba(0,0,0,.2);
+      border-top-color:#000; border-radius:50%; animation:spin .7s linear infinite;
+      display:inline-block; vertical-align:middle; margin-right:7px;
     }
+    .step { display:none; }
+    .step.active { display:block; animation:slideUp .25s ease; }
 
-    .step { display: none; }
-    .step.active { display: block; animation: slideUp 0.25s ease; }
+    /* ── APP LAYOUT ── */
+    #app { display:none; height:100vh; flex-direction:row; }
+    #app.visible { display:flex; }
 
-    /* ─── APP ─── */
-    #app { display: none; height: 100vh; flex-direction: column; }
-    #app.visible { display: flex; }
+    /* ── LEFT: MAIN COLUMN ── */
+    #main-col { display:flex; flex-direction:column; flex:1; min-width:0; }
 
-    /* ─── TOPBAR ─── */
+    /* ── TOPBAR ── */
     .topbar {
-      display: flex; align-items: center;
-      padding: 0 18px; height: 50px;
-      background: var(--bg2);
-      border-bottom: 1px solid var(--border2);
-      flex-shrink: 0; gap: 14px;
+      display:flex; align-items:center; padding:0 16px;
+      height:48px; background:var(--bg2);
+      border-bottom:1px solid var(--border2); flex-shrink:0; gap:12px;
     }
-
     .topbar-logo {
-      font-family: 'Outfit', sans-serif;
-      font-weight: 300; font-size: 14px;
-      letter-spacing: 5px; text-transform: uppercase;
-      color: #ffffff; flex-shrink: 0;
-      padding-right: 14px;
-      border-right: 1px solid var(--border2);
+      font-family:'Outfit',sans-serif; font-weight:300; font-size:14px;
+      letter-spacing:5px; text-transform:uppercase; color:#fff;
+      flex-shrink:0; padding-right:12px; border-right:1px solid var(--border2);
     }
-
-    /* ─── INLINE VIEWERS ─── */
-    .viewers-inline {
-      display: flex; align-items: center; gap: 5px; flex-shrink: 0;
-    }
-
+    .viewers-inline { display:flex; align-items:center; gap:5px; flex-shrink:0; }
     .viewer-chip {
-      display: flex; align-items: center; gap: 5px;
-      background: var(--dim2); border: 1px solid var(--border2);
-      border-radius: 20px; padding: 3px 9px 3px 4px;
-      font-size: 12px; color: var(--text2); white-space: nowrap;
+      display:flex; align-items:center; gap:5px;
+      background:var(--dim2); border:1px solid var(--border2);
+      border-radius:20px; padding:3px 9px 3px 4px;
+      font-size:12px; color:var(--text2); white-space:nowrap;
     }
-    .viewer-chip.is-host { border-color: var(--border); color: var(--text); }
-
-    .viewer-chip-avatar {
-      width: 20px; height: 20px; border-radius: 50%;
-      background: var(--bg3); border: 1px solid var(--border2);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 10px; font-weight: 600; color: var(--text2); flex-shrink: 0;
+    .viewer-chip.is-host { border-color:var(--border); color:var(--text); }
+    .viewer-chip-av {
+      width:20px; height:20px; border-radius:50%; background:var(--bg3);
+      border:1px solid var(--border2); display:flex; align-items:center;
+      justify-content:center; font-size:10px; font-weight:600; color:var(--text2); flex-shrink:0;
     }
-    .viewer-chip.is-host .viewer-chip-avatar { background: var(--dim); color: #fff; border-color: var(--border); }
-
-    .topbar-sep { width: 1px; height: 20px; background: var(--border2); flex-shrink: 0; }
-
-    /* ─── URL ─── */
-    .topbar-url { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
-
-    #url-input {
-      flex: 1; min-width: 0;
-      background: var(--bg3); border: 1px solid var(--border2);
-      border-radius: var(--radius-sm); padding: 7px 12px;
-      color: var(--text); font-family: 'Outfit', sans-serif;
-      font-size: 13px; outline: none; transition: border-color 0.18s;
-    }
-    #url-input:focus { border-color: var(--border); }
-    #url-input::placeholder { color: var(--text3); }
-
-    .btn-sm {
-      background: var(--bg3); border: 1px solid var(--border2);
-      border-radius: var(--radius-sm); padding: 7px 14px;
-      color: var(--text2); font-family: 'Outfit', sans-serif;
-      font-size: 12px; font-weight: 500; cursor: pointer;
-      transition: all 0.18s; white-space: nowrap; flex-shrink: 0;
-    }
-    .btn-sm:hover { border-color: var(--border); color: var(--text); background: var(--dim); }
-    .btn-sm.white { background: #fff; color: #000; border-color: #fff; font-weight: 600; }
-    .btn-sm.white:hover { background: #e5e5e5; border-color: #e5e5e5; }
-
+    .viewer-chip.is-host .viewer-chip-av { background:var(--dim); color:#fff; border-color:var(--border); }
+    .topbar-sep { width:1px; height:20px; background:var(--border2); flex-shrink:0; }
     .user-badge {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 12px; color: var(--text2); flex-shrink: 0;
-      padding-left: 14px; border-left: 1px solid var(--border2);
+      display:flex; align-items:center; gap:6px; font-size:12px;
+      color:var(--text2); flex-shrink:0; margin-left:auto;
+      padding-left:12px; border-left:1px solid var(--border2);
     }
 
-    .host-only-msg { font-size: 12px; color: var(--text3); }
-
-    /* ─── HOST CONTROLS ─── */
+    /* ── HOST CONTROLS ── */
     .host-controls {
-      display: none; background: var(--bg2);
-      border-bottom: 1px solid var(--border2);
-      padding: 7px 18px; gap: 20px;
-      align-items: center; flex-wrap: wrap;
+      display:none; background:var(--bg2); border-bottom:1px solid var(--border2);
+      padding:7px 16px; gap:18px; align-items:center; flex-wrap:wrap;
     }
-    .host-controls.visible { display: flex; }
-
-    .control-label {
-      font-size: 10px; color: var(--text3);
-      text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600;
-    }
-
-    .toggle-wrap { display: flex; align-items: center; gap: 8px; }
-
+    .host-controls.visible { display:flex; }
+    .control-label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:.8px; font-weight:600; }
+    .toggle-wrap { display:flex; align-items:center; gap:8px; }
     .toggle {
-      width: 34px; height: 19px; background: var(--bg3);
-      border: 1px solid var(--border2); border-radius: 20px;
-      cursor: pointer; position: relative; transition: all 0.2s; flex-shrink: 0;
+      width:34px; height:19px; background:var(--bg3); border:1px solid var(--border2);
+      border-radius:20px; cursor:pointer; position:relative; transition:all .2s; flex-shrink:0;
     }
     .toggle::after {
-      content: ''; position: absolute;
-      width: 11px; height: 11px; background: var(--text3);
-      border-radius: 50%; top: 3px; left: 3px; transition: all 0.2s;
+      content:''; position:absolute; width:11px; height:11px;
+      background:var(--text3); border-radius:50%; top:3px; left:3px; transition:all .2s;
     }
-    .toggle.on { background: #fff; border-color: #fff; }
-    .toggle.on::after { background: #000; transform: translateX(15px); }
+    .toggle.on { background:#fff; border-color:#fff; }
+    .toggle.on::after { background:#000; transform:translateX(15px); }
+    .toggle-label { font-size:12px; color:var(--text2); }
 
-    .toggle-label { font-size: 12px; color: var(--text2); }
+    /* ── ADD TO QUEUE BAR (viewer) ── */
+    #viewer-queue-bar {
+      display:none; background:var(--bg2); border-bottom:1px solid var(--border2); padding:8px 16px;
+    }
+    #viewer-queue-bar .inner { display:flex; gap:8px; align-items:center; }
+    .hint-text { font-size:11px; color:var(--text3); margin-top:4px; }
 
-    /* ─── PLAYER ─── */
+    /* ── HOST ADD URL BAR ── */
+    #host-add-bar {
+      display:none; background:var(--bg2); border-bottom:1px solid var(--border2); padding:8px 16px;
+    }
+    #host-add-bar .inner { display:flex; gap:8px; align-items:center; }
+    #host-add-bar.visible { display:block; }
+
+    /* ── PLAYER ── */
     .player-wrap {
-      flex: 1; display: flex; align-items: center;
-      justify-content: center; background: #000;
-      position: relative; overflow: hidden;
+      flex:1; display:flex; align-items:center; justify-content:center;
+      background:#000; position:relative; overflow:hidden;
     }
-    #player-frame { width: 100%; height: 100%; border: none; }
-
+    #player-frame { width:100%; height:100%; border:none; display:none; }
     .player-placeholder {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 14px; color: var(--text3); text-align: center;
+      display:flex; flex-direction:column; align-items:center;
+      justify-content:center; gap:14px; color:var(--text3); text-align:center;
     }
-    .player-placeholder svg { width: 52px; height: 52px; opacity: 0.15; }
-    .player-placeholder p { font-size: 14px; max-width: 260px; line-height: 1.7; font-weight: 300; }
+    .player-placeholder svg { width:52px; height:52px; opacity:.15; }
+    .player-placeholder p { font-size:14px; max-width:260px; line-height:1.7; font-weight:300; }
 
-    /* ─── SYNC ─── */
+    /* seek blocker overlay */
+    #seek-blocker {
+      position:absolute; bottom:0; left:0; right:0; height:52px;
+      z-index:10; cursor:not-allowed; display:none;
+    }
+    #seek-blocker.active { display:block; }
+
+    /* ── SYNC INDICATOR ── */
     #sync-indicator {
-      position: fixed; top: 65px; left: 50%;
-      transform: translateX(-50%);
-      background: rgba(24,24,24,0.96);
-      border: 1px solid var(--border);
-      color: var(--text2); padding: 7px 16px;
-      border-radius: 20px; font-size: 12px;
-      z-index: 500; display: none; backdrop-filter: blur(8px);
+      position:absolute; top:12px; left:50%; transform:translateX(-50%);
+      background:rgba(24,24,24,.96); border:1px solid var(--border);
+      color:var(--text2); padding:6px 14px; border-radius:20px;
+      font-size:12px; z-index:20; display:none; backdrop-filter:blur(8px);
     }
 
-    /* ─── SUGGEST BAR ─── */
-    #viewer-suggest-bar {
-      display: none; background: var(--bg2);
-      border-bottom: 1px solid var(--border2); padding: 8px 18px;
-    }
-    #viewer-suggest-bar .inner { display: flex; gap: 8px; align-items: center; max-width: 580px; }
-    .nuuls-notice { font-size: 11px; color: var(--text3); margin-top: 4px; }
-
-    /* ─── SUGGESTION NOTIFY ─── */
-    #suggestion-notify {
-      display: none; background: var(--bg3);
-      border-bottom: 1px solid var(--border);
-      padding: 9px 18px; font-size: 13px;
-      color: var(--text2); align-items: center; gap: 10px; flex-wrap: wrap;
-    }
-    #suggestion-notify.visible { display: flex; }
-
-    /* ─── BOTTOM BAR ─── */
+    /* ── BOTTOM BAR ── */
     .bottom-bar {
-      background: var(--bg2); border-top: 1px solid var(--border2);
-      padding: 10px 18px; display: flex;
-      align-items: center; justify-content: center;
-      gap: 8px; flex-shrink: 0;
+      background:var(--bg2); border-top:1px solid var(--border2);
+      padding:9px 16px; display:flex; align-items:center;
+      justify-content:center; gap:8px; flex-shrink:0;
     }
-
     .ctrl-btn {
-      background: var(--bg3); border: 1px solid var(--border2);
-      border-radius: var(--radius-sm); padding: 9px 18px;
-      color: var(--text2); font-family: 'Outfit', sans-serif;
-      font-size: 13px; cursor: pointer;
-      display: flex; align-items: center; gap: 7px; transition: all 0.18s;
+      background:var(--bg3); border:1px solid var(--border2);
+      border-radius:var(--radius-sm); padding:8px 16px; color:var(--text2);
+      font-family:'Outfit',sans-serif; font-size:13px; cursor:pointer;
+      display:flex; align-items:center; gap:7px; transition:all .18s;
     }
-    .ctrl-btn:hover:not(:disabled) { border-color: var(--border); color: var(--text); background: var(--dim); }
-    .ctrl-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+    .ctrl-btn:hover:not(:disabled) { border-color:var(--border); color:var(--text); background:var(--dim); }
+    .ctrl-btn:disabled { opacity:.2; cursor:not-allowed; }
+    .ctrl-btn.danger:hover:not(:disabled) { border-color:rgba(252,165,165,.4); color:var(--error); }
 
-    /* ─── STATUS BAR ─── */
+    /* ── STATUS BAR ── */
     .status-bar {
-      background: var(--bg); border-top: 1px solid var(--border2);
-      padding: 5px 18px; display: flex;
-      align-items: center; gap: 8px;
-      font-size: 11px; color: var(--text3); flex-shrink: 0;
+      background:var(--bg); border-top:1px solid var(--border2);
+      padding:4px 16px; display:flex; align-items:center; gap:8px;
+      font-size:11px; color:var(--text3); flex-shrink:0;
     }
-    .status-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
-    .status-dot.red    { background: var(--error); }
-    .status-dot.yellow { background: #fcd34d; animation: pulse-dot 1.5s infinite; }
+    .status-dot { width:5px; height:5px; border-radius:50%; background:var(--success); flex-shrink:0; }
+    .status-dot.red    { background:var(--error); }
+    .status-dot.yellow { background:#fcd34d; animation:pulse-dot 1.5s infinite; }
 
-    /* ─── TOAST ─── */
+    /* ── RIGHT: PLAYLIST PANEL ── */
+    #playlist-panel {
+      width:260px; flex-shrink:0; background:var(--bg2);
+      border-left:1px solid var(--border2);
+      display:flex; flex-direction:column;
+    }
+
+    .playlist-header {
+      padding:12px 14px 10px; border-bottom:1px solid var(--border2);
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .playlist-title { font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.8px; font-weight:600; }
+    .playlist-count { font-size:11px; color:var(--text3); }
+
+    .playlist-list {
+      flex:1; overflow-y:auto; padding:6px 0;
+    }
+
+    .pl-item {
+      display:flex; align-items:center; gap:10px;
+      padding:8px 14px; cursor:default;
+      transition:background .15s; position:relative;
+    }
+    .pl-item:hover { background:var(--dim2); }
+    .pl-item.active-item { background:var(--dim); }
+    .pl-item.active-item .pl-title { color:var(--text); }
+
+    .pl-thumb {
+      width:48px; height:34px; border-radius:4px; overflow:hidden;
+      background:var(--bg3); flex-shrink:0; display:flex;
+      align-items:center; justify-content:center;
+    }
+    .pl-thumb img { width:100%; height:100%; object-fit:cover; }
+    .pl-thumb-placeholder { opacity:.3; }
+
+    .pl-info { flex:1; min-width:0; }
+    .pl-title { font-size:12px; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .pl-sub   { font-size:10px; color:var(--text3); margin-top:2px; }
+
+    .pl-actions { display:flex; gap:4px; opacity:0; transition:opacity .15s; }
+    .pl-item:hover .pl-actions { opacity:1; }
+    .pl-action-btn {
+      background:none; border:none; color:var(--text3); cursor:pointer;
+      padding:3px 5px; border-radius:4px; font-size:11px; transition:all .15s;
+      display:flex; align-items:center;
+    }
+    .pl-action-btn:hover { background:var(--dim); color:var(--text); }
+    .pl-action-btn.del:hover { color:var(--error); }
+
+    .pl-now-playing {
+      width:6px; height:6px; border-radius:50%; background:var(--success);
+      flex-shrink:0; animation:pulse-dot 2s infinite;
+    }
+
+    .playlist-empty {
+      padding:28px 14px; text-align:center;
+      font-size:12px; color:var(--text3); line-height:1.6;
+    }
+
+    /* ── TOAST ── */
     #toast {
-      position: fixed; bottom: 22px; left: 50%;
-      transform: translateX(-50%) translateY(60px);
-      background: var(--card2); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); padding: 10px 20px;
-      font-size: 13px; color: var(--text);
-      transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1), opacity 0.28s;
-      opacity: 0; z-index: 2000; pointer-events: none;
-      max-width: 300px; text-align: center;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+      position:fixed; bottom:20px; left:50%;
+      transform:translateX(-50%) translateY(60px);
+      background:var(--card2); border:1px solid var(--border);
+      border-radius:var(--radius-sm); padding:9px 18px;
+      font-size:13px; color:var(--text);
+      transition:transform .28s cubic-bezier(.34,1.56,.64,1),opacity .28s;
+      opacity:0; z-index:2000; pointer-events:none; max-width:300px; text-align:center;
+      box-shadow:0 8px 30px rgba(0,0,0,.5);
     }
-    #toast.show    { transform: translateX(-50%) translateY(0); opacity: 1; }
-    #toast.success { color: var(--success); border-color: rgba(110,231,183,0.25); }
-    #toast.error   { color: var(--error);   border-color: rgba(252,165,165,0.25); }
+    #toast.show    { transform:translateX(-50%) translateY(0); opacity:1; }
+    #toast.success { color:var(--success); border-color:rgba(110,231,183,.25); }
+    #toast.error   { color:var(--error);   border-color:rgba(252,165,165,.25); }
 
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 10px; }
+    /* small btn */
+    .btn-sm {
+      background:var(--bg3); border:1px solid var(--border2);
+      border-radius:var(--radius-sm); padding:7px 13px; color:var(--text2);
+      font-family:'Outfit',sans-serif; font-size:12px; font-weight:500;
+      cursor:pointer; transition:all .18s; white-space:nowrap; flex-shrink:0;
+    }
+    .btn-sm:hover { border-color:var(--border); color:var(--text); background:var(--dim); }
+    .btn-sm.white { background:#fff; color:#000; border-color:#fff; font-weight:600; }
+    .btn-sm.white:hover { background:#e5e5e5; border-color:#e5e5e5; }
+
+    ::-webkit-scrollbar { width:4px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:10px; }
   </style>
 </head>
 <body>
 
-<!-- MODAL -->
+<!-- ══ MODAL ══ -->
 <div id="modal-overlay">
   <div class="modal-box">
     <div class="modal-logo">Biznesowy</div>
-    <div class="modal-subtitle">wspólne oglądanie · jeden pokój</div>
 
+    <!-- STEP 1: role -->
     <div class="step active" id="step-role">
       <div class="role-grid">
         <button class="role-btn" id="btn-viewer-role" onclick="selectRole('viewer')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-            <circle cx="12" cy="12" r="3"/>
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
           </svg>
           <span>Widz</span>
         </button>
         <button class="role-btn" id="btn-host-role" onclick="selectRole('host')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <polygon points="23 7 16 12 23 17 23 7"/>
-            <rect x="1" y="5" width="15" height="14" rx="2"/>
+            <polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/>
           </svg>
           <span>Host</span>
         </button>
@@ -389,125 +353,148 @@
       <div class="error-msg" id="role-error"></div>
     </div>
 
+    <!-- STEP 2A: viewer -->
     <div class="step" id="step-viewer">
       <div class="input-group">
-        <label class="input-label">Twój nick</label>
-        <input class="input-field" id="viewer-nick" type="text" placeholder="np. Marek123" maxlength="20" />
+        <label class="input-label">Nick</label>
+        <div class="saved-nicks" id="saved-nicks-viewer"></div>
+        <input class="input-field" id="viewer-nick" type="text" maxlength="20" autocomplete="off" />
       </div>
       <button class="btn-primary" onclick="joinAsViewer()">Dołącz jako widz</button>
       <div class="error-msg" id="viewer-error"></div>
-      <p style="text-align:center;margin-top:16px;font-size:12px;color:var(--text3);cursor:pointer;" onclick="goBackToRole()">← Wróć</p>
+      <p style="text-align:center;margin-top:14px;font-size:12px;color:var(--text3);cursor:pointer;" onclick="goBackToRole()">← Wróć</p>
     </div>
 
+    <!-- STEP 2B: host -->
     <div class="step" id="step-host">
       <div class="input-group">
-        <label class="input-label">Hasło hosta</label>
-        <input class="input-field" id="host-password" type="password" placeholder="••••••••" />
+        <label class="input-label">Hasło</label>
+        <input class="input-field" id="host-password" type="password" />
       </div>
       <div class="input-group" id="host-nick-group" style="display:none">
-        <label class="input-label">Twój nick</label>
-        <input class="input-field" id="host-nick" type="text" placeholder="np. Admin" maxlength="20" />
+        <label class="input-label">Nick</label>
+        <div class="saved-nicks" id="saved-nicks-host"></div>
+        <input class="input-field" id="host-nick" type="text" maxlength="20" autocomplete="off" />
       </div>
       <button class="btn-primary" id="host-btn" onclick="joinAsHost()">Weryfikuj hasło</button>
       <div class="error-msg" id="host-error"></div>
-      <p style="text-align:center;margin-top:16px;font-size:12px;color:var(--text3);cursor:pointer;" onclick="goBackToRole()">← Wróć</p>
+      <p style="text-align:center;margin-top:14px;font-size:12px;color:var(--text3);cursor:pointer;" onclick="goBackToRole()">← Wróć</p>
     </div>
   </div>
 </div>
 
-<!-- APP -->
+<!-- ══ APP ══ -->
 <div id="app">
 
-  <div class="topbar">
-    <div class="topbar-logo">Biznesowy</div>
+  <!-- LEFT / MAIN COL -->
+  <div id="main-col">
 
-    <div class="viewers-inline" id="viewers-inline"></div>
-
-    <div class="topbar-sep"></div>
-
-    <div class="topbar-url" id="host-url-wrap" style="display:none">
-      <input id="url-input" type="text" placeholder="Wklej link YouTube lub nuuls.com..." />
-      <button class="btn-sm white" onclick="loadVideo()">▶ Załaduj</button>
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-logo">Biznesowy</div>
+      <div class="viewers-inline" id="viewers-inline"></div>
+      <div class="topbar-sep"></div>
+      <div class="user-badge" id="user-badge" style="display:none"></div>
     </div>
-    <div class="host-only-msg" id="viewer-url-msg" style="display:none">Host wybiera film</div>
 
-    <div class="user-badge" id="user-badge" style="display:none"></div>
-  </div>
-
-  <div class="host-controls" id="host-controls">
-    <span class="control-label">Host</span>
-    <div class="toggle-wrap">
-      <div class="toggle" id="toggle-viewer-suggest" onclick="toggleViewerSuggest()"></div>
-      <span class="toggle-label">Widzowie mogą sugerować linki</span>
+    <!-- HOST CONTROLS -->
+    <div class="host-controls" id="host-controls">
+      <span class="control-label">Host</span>
+      <div class="toggle-wrap">
+        <div class="toggle" id="toggle-viewer-queue" onclick="toggleViewerQueue()"></div>
+        <span class="toggle-label">Widzowie mogą dodawać do kolejki</span>
+      </div>
+      <div class="toggle-wrap">
+        <div class="toggle" id="toggle-viewer-pause" onclick="toggleViewerPause()"></div>
+        <span class="toggle-label">Widzowie mogą pauzować</span>
+      </div>
     </div>
-    <div class="toggle-wrap">
-      <div class="toggle" id="toggle-viewer-pause" onclick="toggleViewerPause()"></div>
-      <span class="toggle-label">Widzowie mogą pauzować</span>
+
+    <!-- HOST ADD URL BAR -->
+    <div id="host-add-bar">
+      <div class="inner">
+        <input id="url-input" class="input-field" style="flex:1;padding:7px 12px;font-size:13px;" type="text" placeholder="Wklej link YouTube..." />
+        <button class="btn-sm white" onclick="hostAddToQueue()">+ Dodaj do kolejki</button>
+      </div>
+    </div>
+
+    <!-- VIEWER ADD TO QUEUE BAR -->
+    <div id="viewer-queue-bar">
+      <div class="inner">
+        <input id="viewer-url-input" class="input-field" style="flex:1;padding:7px 12px;font-size:13px;" type="text" placeholder="Wklej link YouTube..." />
+        <button class="btn-sm" onclick="viewerAddToQueue()">+ Dodaj do kolejki</button>
+      </div>
+      <div class="hint-text">Obsługiwane: YouTube</div>
+    </div>
+
+    <!-- PLAYER -->
+    <div class="player-wrap" id="player-wrap">
+      <div class="player-placeholder" id="player-placeholder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=".8">
+          <rect x="2" y="3" width="20" height="14" rx="2"/>
+          <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+        <p>Brak aktywnego filmu</p>
+      </div>
+      <iframe id="player-frame" allowfullscreen allow="autoplay; fullscreen"></iframe>
+      <!-- seek blocker: covers ~bottom 52px where YT progress bar lives -->
+      <div id="seek-blocker" title="Seekowanie zablokowane"></div>
+      <div id="sync-indicator">⟳ Synchronizowanie...</div>
+    </div>
+
+    <!-- BOTTOM BAR -->
+    <div class="bottom-bar">
+      <button class="ctrl-btn" id="btn-play" onclick="ctrlPlay()" disabled>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+        Play
+      </button>
+      <button class="ctrl-btn" id="btn-pause" onclick="ctrlPause()" disabled>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        Pauza
+      </button>
+      <button class="ctrl-btn" id="btn-seek-back" onclick="ctrlSeek(-10)" disabled>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.35"/></svg>
+        −10s
+      </button>
+      <button class="ctrl-btn" id="btn-seek-fwd" onclick="ctrlSeek(10)" disabled>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.49-3.35"/></svg>
+        +10s
+      </button>
+      <button class="ctrl-btn danger" id="btn-skip" onclick="ctrlSkip()" disabled title="Pomiń aktualny film">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,4 15,12 5,20"/><rect x="16" y="4" width="3" height="16"/></svg>
+        Pomiń
+      </button>
+    </div>
+
+    <!-- STATUS BAR -->
+    <div class="status-bar">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">Łączenie...</span>
     </div>
   </div>
 
-  <div id="viewer-suggest-bar">
-    <div class="inner">
-      <input id="suggest-input" class="input-field" style="flex:1;padding:7px 12px;font-size:13px;" type="text" placeholder="Zaproponuj link YouTube lub nuuls.com..." />
-      <button class="btn-sm" onclick="sendSuggestion()">Zaproponuj</button>
+  <!-- RIGHT: PLAYLIST -->
+  <div id="playlist-panel">
+    <div class="playlist-header">
+      <span class="playlist-title">Kolejka</span>
+      <span class="playlist-count" id="pl-count">0 filmów</span>
     </div>
-    <div class="nuuls-notice">Obsługiwane: YouTube i nuuls.com</div>
-  </div>
-
-  <div id="suggestion-notify">
-    <span>💬</span>
-    <span><strong style="color:var(--text)">Propozycja:</strong> <span id="suggestion-text"></span></span>
-    <button class="btn-sm white" style="padding:5px 12px;font-size:11px;" onclick="acceptSuggestion()">Załaduj</button>
-    <button class="btn-sm" style="padding:5px 12px;font-size:11px;" onclick="dismissSuggestion()">Odrzuć</button>
-  </div>
-
-  <div class="player-wrap">
-    <div class="player-placeholder" id="player-placeholder">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8">
-        <rect x="2" y="3" width="20" height="14" rx="2"/>
-        <line x1="8" y1="21" x2="16" y2="21"/>
-        <line x1="12" y1="17" x2="12" y2="21"/>
-      </svg>
-      <p>Czekaj na hosta — załaduje film za chwilę</p>
+    <div class="playlist-list" id="playlist-list">
+      <div class="playlist-empty">Kolejka jest pusta.<br>Dodaj film, żeby zacząć.</div>
     </div>
-    <iframe id="player-frame" style="display:none" allowfullscreen allow="autoplay; fullscreen"></iframe>
   </div>
 
-  <div id="sync-indicator">⟳ Synchronizowanie...</div>
-
-  <div class="bottom-bar">
-    <button class="ctrl-btn" id="btn-play" onclick="ctrlPlay()" disabled>
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-      Play
-    </button>
-    <button class="ctrl-btn" id="btn-pause" onclick="ctrlPause()" disabled>
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-      Pauza
-    </button>
-    <button class="ctrl-btn" id="btn-seek-back" onclick="ctrlSeek(-10)" disabled>
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.35"/></svg>
-      −10s
-    </button>
-    <button class="ctrl-btn" id="btn-seek-fwd" onclick="ctrlSeek(10)" disabled>
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.49-3.35"/></svg>
-      +10s
-    </button>
-  </div>
-
-  <div class="status-bar">
-    <div class="status-dot" id="status-dot"></div>
-    <span id="status-text">Łączenie z bazą danych...</span>
-  </div>
-</div>
+</div><!-- #app -->
 
 <div id="toast"></div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, set, get, onValue, update, push, remove, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-  const CLOUDFLARE_WORKER = "https://biznesowy-password.wiktoriaczarneckaaa.workers.dev/";
-
+  /* ── CONFIG ── */
+  const CLOUDFLARE = "https://biznesowy-password.wiktoriaczarneckaaa.workers.dev/";
   const firebaseConfig = {
     apiKey: "AIzaSyDSwwh3kPFZZZfIYS9PsqvuZiKoNbzmvi8",
     authDomain: "biznesowy-watch.firebaseapp.com",
@@ -518,293 +505,464 @@
     appId: "1:46337543990:web:86ca3ca124ca4eede76d97"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db  = getDatabase(app);
+  const fbApp = initializeApp(firebaseConfig);
+  const db    = getDatabase(fbApp);
 
+  /* ── STATE ── */
   let myRole = null, myNick = null, myId = null;
   let isPlaying = false;
-  let viewerSuggestEnabled = false, viewerPauseEnabled = false;
-  let currentSuggestion = null;
-  let playerType = null;
+  let viewerQueueEnabled = false, viewerPauseEnabled = false;
   let lastSeekTime = 0;
+  let currentUrl = null;
+  let playlist = {};   // keyed by Firebase push key
+  let currentKey = null;
 
-  function genId() { return Math.random().toString(36).slice(2, 10); }
+  /* ── UTILS ── */
+  const genId = () => Math.random().toString(36).slice(2,10);
 
-  window.showToast = function(msg, type = '') {
+  window.showToast = (msg, type='') => {
     const t = document.getElementById('toast');
-    t.textContent = msg; t.className = 'show ' + type;
-    clearTimeout(window._toastTimer);
-    window._toastTimer = setTimeout(() => t.className = '', 3000);
+    t.textContent = msg; t.className = 'show '+type;
+    clearTimeout(window._tt);
+    window._tt = setTimeout(() => t.className='', 3000);
   };
 
-  function setStatus(msg, color = 'green') {
+  const setStatus = (msg, color='green') => {
     document.getElementById('status-text').textContent = msg;
-    const dot = document.getElementById('status-dot');
-    dot.className = 'status-dot';
-    if (color === 'red')    dot.classList.add('red');
-    if (color === 'yellow') dot.classList.add('yellow');
+    const d = document.getElementById('status-dot');
+    d.className = 'status-dot';
+    if (color==='red')    d.classList.add('red');
+    if (color==='yellow') d.classList.add('yellow');
+  };
+
+  /* ── SAVED NICKS (localStorage) ── */
+  const NICK_KEY = 'biznesowy_nicks';
+
+  function getSavedNicks() {
+    try { return JSON.parse(localStorage.getItem(NICK_KEY) || '[]'); } catch { return []; }
   }
 
-  window.selectRole = function(role) {
+  function saveNick(nick) {
+    let nicks = getSavedNicks().filter(n => n !== nick);
+    nicks.unshift(nick);
+    nicks = nicks.slice(0, 5);
+    localStorage.setItem(NICK_KEY, JSON.stringify(nicks));
+  }
+
+  function renderSavedNicks(containerId, inputId) {
+    const nicks = getSavedNicks();
+    const el = document.getElementById(containerId);
+    if (!nicks.length) { el.style.display='none'; return; }
+    el.style.display='flex';
+    el.innerHTML = nicks.map(n =>
+      `<span class="nick-chip" onclick="document.getElementById('${inputId}').value='${n.replace(/'/g,"\\'")}'">${n}</span>`
+    ).join('');
+  }
+
+  /* ── MODAL NAV ── */
+  window.selectRole = role => {
     document.getElementById('step-role').classList.remove('active');
     ['viewer','host'].forEach(r => document.getElementById('btn-'+r+'-role').classList.remove('active'));
     document.getElementById('btn-'+role+'-role').classList.add('active');
-    setTimeout(() => document.getElementById('step-'+role).classList.add('active'), 40);
+    setTimeout(() => {
+      document.getElementById('step-'+role).classList.add('active');
+      if (role==='viewer') renderSavedNicks('saved-nicks-viewer','viewer-nick');
+    }, 40);
   };
 
-  window.goBackToRole = function() {
+  window.goBackToRole = () => {
     document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
     document.getElementById('step-role').classList.add('active');
   };
 
-  window.joinAsViewer = async function() {
+  /* ── JOIN ── */
+  window.joinAsViewer = async () => {
     const nick = document.getElementById('viewer-nick').value.trim();
-    if (!nick) { document.getElementById('viewer-error').textContent = 'Wpisz nick!'; return; }
-    myRole = 'viewer'; myNick = nick; myId = genId();
+    if (!nick) { document.getElementById('viewer-error').textContent='Wpisz nick!'; return; }
+    myRole='viewer'; myNick=nick; myId=genId();
+    saveNick(nick);
     await enterRoom();
   };
 
-  window.joinAsHost = async function() {
+  window.joinAsHost = async () => {
     const password  = document.getElementById('host-password').value;
     const nickGroup = document.getElementById('host-nick-group');
     const btn       = document.getElementById('host-btn');
-    const errorEl   = document.getElementById('host-error');
-    if (!password) { errorEl.textContent = 'Wpisz hasło!'; return; }
+    const errEl     = document.getElementById('host-error');
+    if (!password) { errEl.textContent='Wpisz hasło!'; return; }
 
     if (nickGroup.style.display !== 'none') {
       const nick = document.getElementById('host-nick').value.trim();
-      if (!nick) { errorEl.textContent = 'Wpisz nick!'; return; }
-      myRole = 'host'; myNick = nick; myId = genId();
+      if (!nick) { errEl.textContent='Wpisz nick!'; return; }
+      myRole='host'; myNick=nick; myId=genId();
+      saveNick(nick);
       await enterRoom(); return;
     }
 
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>Weryfikowanie...';
-    errorEl.textContent = '';
+    btn.disabled=true;
+    btn.innerHTML='<span class="spinner"></span>Weryfikowanie...';
+    errEl.textContent='';
 
     try {
-      const res  = await fetch(CLOUDFLARE_WORKER, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password })
-      });
+      const res  = await fetch(CLOUDFLARE, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password}) });
       const data = await res.json();
       if (data.success) {
-        nickGroup.style.display = 'block';
-        btn.disabled = false; btn.textContent = 'Wejdź jako host';
-        showToast('✓ Hasło poprawne', 'success');
+        nickGroup.style.display='block';
+        renderSavedNicks('saved-nicks-host','host-nick');
+        btn.disabled=false; btn.textContent='Wejdź jako host';
+        showToast('✓ Hasło poprawne','success');
       } else {
-        errorEl.textContent = 'Nieprawidłowe hasło.';
-        btn.disabled = false; btn.textContent = 'Weryfikuj hasło';
+        errEl.textContent='Nieprawidłowe hasło.';
+        btn.disabled=false; btn.textContent='Weryfikuj hasło';
       }
     } catch {
-      errorEl.textContent = 'Błąd połączenia z serwerem.';
-      btn.disabled = false; btn.textContent = 'Weryfikuj hasło';
+      errEl.textContent='Błąd połączenia.';
+      btn.disabled=false; btn.textContent='Weryfikuj hasło';
     }
   };
 
+  /* ── ENTER ROOM ── */
   async function enterRoom() {
-    const viewerRef = ref(db, `viewers/${myId}`);
-    await set(viewerRef, { nick: myNick, role: myRole, joinedAt: Date.now(), lastSeen: Date.now() });
-    startHeartbeat(viewerRef);
-    document.getElementById('modal-overlay').style.display = 'none';
+    const vRef = ref(db, `viewers/${myId}`);
+    await set(vRef, { nick:myNick, role:myRole, joinedAt:Date.now(), lastSeen:Date.now() });
+    setInterval(() => update(vRef, {lastSeen:Date.now()}), 10000);
+    window.addEventListener('beforeunload', () => set(vRef, null));
+
+    document.getElementById('modal-overlay').style.display='none';
     document.getElementById('app').classList.add('visible');
-    setupUI(); listenToRoom(); listenToViewers(); listenToSuggestion();
-    setStatus('Połączono z pokojem', 'green');
+    setupUI();
+    listenRoom();
+    listenViewers();
+    listenPlaylist();
+    setStatus('Połączono','green');
   }
 
-  function startHeartbeat(viewerRef) {
-    setInterval(() => update(viewerRef, { lastSeen: Date.now() }), 10000);
-    window.addEventListener('beforeunload', () => set(viewerRef, null));
-  }
-
+  /* ── UI SETUP ── */
   function setupUI() {
     const badge = document.getElementById('user-badge');
-    badge.style.display = 'flex';
-    badge.innerHTML = `<span style="color:var(--text3)">${myRole==='host'?'👑':'👁'}</span> ${myNick}`;
-    if (myRole === 'host') {
-      document.getElementById('host-url-wrap').style.display = 'flex';
+    badge.style.display='flex';
+    badge.innerHTML=`<span style="color:var(--text3)">${myRole==='host'?'👑':'👁'}</span> ${myNick}`;
+
+    if (myRole==='host') {
+      document.getElementById('host-add-bar').classList.add('visible');
       document.getElementById('host-controls').classList.add('visible');
-      enableControls(true, true);
+      enableControls(true);
     } else {
-      document.getElementById('viewer-url-msg').style.display = 'block';
-      enableControls(false, false);
+      enableControls(false);
     }
   }
 
-  function enableControls(play, seek) {
-    document.getElementById('btn-play').disabled      = !play;
-    document.getElementById('btn-pause').disabled     = !play;
-    document.getElementById('btn-seek-back').disabled = !seek;
-    document.getElementById('btn-seek-fwd').disabled  = !seek;
+  function enableControls(isHost) {
+    // host always controls play/seek/skip
+    // viewer controls conditionally set in listenRoom
+    document.getElementById('btn-play').disabled      = !isHost;
+    document.getElementById('btn-pause').disabled     = !isHost;
+    document.getElementById('btn-seek-back').disabled = !isHost;
+    document.getElementById('btn-seek-fwd').disabled  = !isHost;
+    document.getElementById('btn-skip').disabled      = !isHost;
   }
 
-  function listenToRoom() {
-    onValue(ref(db, 'room'), (snap) => {
-      const data = snap.val(); if (!data) return;
-      if (data.url) loadPlayerFromDB(data.url);
-      if (data.isPlaying !== isPlaying) {
-        isPlaying = data.isPlaying;
-        isPlaying ? syncPlay() : syncPause();
+  /* ── ROOM LISTENER ── */
+  function listenRoom() {
+    onValue(ref(db,'room'), snap => {
+      const data = snap.val();
+
+      // Playback state
+      const newPlaying = data?.isPlaying ?? false;
+      if (newPlaying !== isPlaying) {
+        isPlaying = newPlaying;
+        isPlaying ? doPlay() : doPause();
       }
-      if (data.seekTo !== undefined && data.seekTo !== lastSeekTime) {
-        lastSeekTime = data.seekTo; syncSeekTo(data.seekTo);
+
+      // Seek
+      const seekTo = data?.seekTo ?? 0;
+      if (seekTo !== lastSeekTime) {
+        lastSeekTime = seekTo;
+        doSeekTo(seekTo);
       }
-      viewerSuggestEnabled = !!data.viewerSuggest;
-      viewerPauseEnabled   = !!data.viewerPause;
-      if (myRole === 'host') {
-        document.getElementById('toggle-viewer-suggest').className = 'toggle' + (viewerSuggestEnabled ? ' on' : '');
-        document.getElementById('toggle-viewer-pause').className   = 'toggle' + (viewerPauseEnabled   ? ' on' : '');
+
+      // Current track key
+      const newKey = data?.currentKey ?? null;
+      if (newKey !== currentKey) {
+        currentKey = newKey;
+        renderPlaylist();
+        if (currentKey && playlist[currentKey]) {
+          loadYT(playlist[currentKey].url);
+        } else if (!currentKey) {
+          clearPlayer();
+        }
       }
-      if (myRole === 'viewer') {
-        document.getElementById('viewer-suggest-bar').style.display = viewerSuggestEnabled ? 'block' : 'none';
+
+      // Permissions
+      viewerQueueEnabled = !!data?.viewerQueue;
+      viewerPauseEnabled = !!data?.viewerPause;
+
+      if (myRole==='host') {
+        document.getElementById('toggle-viewer-queue').className = 'toggle'+(viewerQueueEnabled?' on':'');
+        document.getElementById('toggle-viewer-pause').className = 'toggle'+(viewerPauseEnabled?' on':'');
+      }
+
+      if (myRole==='viewer') {
+        document.getElementById('viewer-queue-bar').style.display = viewerQueueEnabled ? 'block' : 'none';
         document.getElementById('btn-pause').disabled = !viewerPauseEnabled;
         document.getElementById('btn-play').disabled  = !viewerPauseEnabled;
+      }
+
+      // seek blocker — always on for viewers, and for everyone when frame is loaded
+      updateSeekBlocker();
+    });
+  }
+
+  /* ── PLAYLIST LISTENER ── */
+  function listenPlaylist() {
+    onValue(ref(db,'playlist'), snap => {
+      playlist = snap.val() || {};
+      renderPlaylist();
+      // If nothing playing and playlist has items, auto-start first (host only)
+      if (myRole==='host' && !currentKey) {
+        const keys = Object.keys(playlist);
+        if (keys.length) advanceToKey(keys[0]);
       }
     });
   }
 
-  function listenToViewers() {
-    onValue(ref(db, 'viewers'), (snap) => {
+  /* ── VIEWERS LISTENER ── */
+  function listenViewers() {
+    onValue(ref(db,'viewers'), snap => {
       const data = snap.val() || {};
       const now  = Date.now();
-      const active = Object.entries(data).filter(([, v]) =>
-        !v.lastSeen || (now - v.lastSeen < 25000) || (now - v.joinedAt < 30000)
+      const active = Object.entries(data).filter(([,v]) =>
+        !v.lastSeen || (now-v.lastSeen<25000) || (now-v.joinedAt<30000)
       );
-      document.getElementById('viewers-inline').innerHTML = active.map(([, v]) => `
+      document.getElementById('viewers-inline').innerHTML = active.map(([,v]) => `
         <div class="viewer-chip ${v.role==='host'?'is-host':''}">
-          <div class="viewer-chip-avatar">${v.nick.charAt(0).toUpperCase()}</div>
-          ${v.nick}${v.role==='host'?' <span style="font-size:10px;opacity:0.45;margin-left:2px">host</span>':''}
+          <div class="viewer-chip-av">${v.nick.charAt(0).toUpperCase()}</div>
+          ${v.nick}${v.role==='host'?' <span style="font-size:10px;opacity:.4;margin-left:2px">host</span>':''}
         </div>
       `).join('');
     });
   }
 
-  function listenToSuggestion() {
-    onValue(ref(db, 'suggestion'), (snap) => {
-      const data = snap.val();
-      const el   = document.getElementById('suggestion-notify');
-      if (!data || !data.url) { el.classList.remove('visible'); currentSuggestion = null; return; }
-      if (myRole === 'host' && data.status === 'pending') {
-        currentSuggestion = data.url;
-        document.getElementById('suggestion-text').textContent = `${data.nick}: ${data.url}`;
-        el.classList.add('visible');
-      }
-    });
+  /* ── RENDER PLAYLIST ── */
+  function renderPlaylist() {
+    const list  = document.getElementById('playlist-list');
+    const count = document.getElementById('pl-count');
+    const keys  = Object.keys(playlist).sort((a,b) => (playlist[a].addedAt||0)-(playlist[b].addedAt||0));
+
+    count.textContent = keys.length + (keys.length===1?' film':' filmów');
+
+    if (!keys.length) {
+      list.innerHTML = '<div class="playlist-empty">Kolejka jest pusta.<br>Dodaj film, żeby zacząć.</div>';
+      return;
+    }
+
+    list.innerHTML = keys.map(key => {
+      const item     = playlist[key];
+      const isActive = key === currentKey;
+      const thumb    = ytThumb(item.url);
+      const title    = item.title || shortUrl(item.url);
+      const who      = item.addedBy || '';
+
+      return `
+      <div class="pl-item ${isActive?'active-item':''}" id="plitem-${key}">
+        ${isActive ? '<div class="pl-now-playing"></div>' : '<div style="width:6px"></div>'}
+        <div class="pl-thumb">
+          ${thumb
+            ? `<img src="${thumb}" loading="lazy" alt="" />`
+            : `<svg class="pl-thumb-placeholder" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5,3 19,12 5,21"/></svg>`
+          }
+        </div>
+        <div class="pl-info">
+          <div class="pl-title">${escHtml(title)}</div>
+          ${who ? `<div class="pl-sub">dodał: ${escHtml(who)}</div>` : ''}
+        </div>
+        <div class="pl-actions">
+          ${myRole==='host' && !isActive ? `<button class="pl-action-btn" onclick="advanceToKey('${key}')" title="Odtwórz teraz">▶</button>` : ''}
+          ${myRole==='host' ? `<button class="pl-action-btn del" onclick="removeFromQueue('${key}')" title="Usuń">✕</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
   }
 
-  window.loadVideo = async function() {
-    const url = document.getElementById('url-input').value.trim();
-    if (!url) { showToast('Wklej link!', 'error'); return; }
-    if (!getEmbedUrl(url)) { showToast('Nieobsługiwany link. Użyj YouTube lub nuuls.com', 'error'); return; }
-    await update(ref(db, 'room'), { url, isPlaying: false, seekTo: 0 });
-    showToast('✓ Film załadowany', 'success');
+  /* ── ADD TO QUEUE ── */
+  window.hostAddToQueue = async () => {
+    const raw = document.getElementById('url-input').value.trim();
+    await addToQueue(raw);
+    document.getElementById('url-input').value = '';
   };
 
-  function loadPlayerFromDB(url) {
+  window.viewerAddToQueue = async () => {
+    const raw = document.getElementById('viewer-url-input').value.trim();
+    await addToQueue(raw);
+    document.getElementById('viewer-url-input').value = '';
+  };
+
+  async function addToQueue(url) {
+    if (!url) { showToast('Wklej link!','error'); return; }
+    const ytId = extractYtId(url);
+    if (!ytId) { showToast('Tylko linki YouTube są obsługiwane','error'); return; }
+    const canonUrl = `https://www.youtube.com/watch?v=${ytId}`;
+    const title    = await fetchYtTitle(ytId);
+    await push(ref(db,'playlist'), {
+      url: canonUrl, ytId, title,
+      addedBy: myNick, addedAt: Date.now()
+    });
+    showToast('✓ Dodano do kolejki','success');
+
+    // if nothing playing, start this item (host only)
+    if (myRole==='host' && !currentKey) {
+      const snap = await get(ref(db,'playlist'));
+      const keys = Object.keys(snap.val()||{});
+      if (keys.length) advanceToKey(keys[keys.length-1]);
+    }
+  }
+
+  /* ── ADVANCE / SKIP ── */
+  window.advanceToKey = async key => {
+    await update(ref(db,'room'), { currentKey:key, isPlaying:false, seekTo:0 });
+  };
+
+  window.ctrlSkip = async () => {
+    if (!currentKey) return;
+    const keys = Object.keys(playlist).sort((a,b)=>(playlist[a].addedAt||0)-(playlist[b].addedAt||0));
+    const idx  = keys.indexOf(currentKey);
+    const next = keys[idx+1] || null;
+    // remove current from playlist
+    await remove(ref(db,`playlist/${currentKey}`));
+    if (next) {
+      await update(ref(db,'room'), { currentKey:next, isPlaying:false, seekTo:0 });
+    } else {
+      await update(ref(db,'room'), { currentKey:null, isPlaying:false, seekTo:0 });
+    }
+    showToast('Film pominięty');
+  };
+
+  window.removeFromQueue = async key => {
+    await remove(ref(db,`playlist/${key}`));
+    if (key===currentKey) await ctrlSkip();
+    showToast('Usunięto z kolejki');
+  };
+
+  /* ── PLAYER ── */
+  function loadYT(url) {
+    const ytId = extractYtId(url);
+    if (!ytId) return;
     const frame = document.getElementById('player-frame');
-    if (frame.dataset.loadedUrl === url) return;
-    const embedUrl = getEmbedUrl(url);
-    if (!embedUrl) return;
+    const embedUrl = `https://www.youtube.com/embed/${ytId}?autoplay=0&enablejsapi=1&origin=${encodeURIComponent(location.origin)}&rel=0`;
+    if (frame.src === embedUrl) return;
     frame.src = embedUrl;
-    frame.dataset.loadedUrl = url;
     frame.style.display = 'block';
     document.getElementById('player-placeholder').style.display = 'none';
-    playerType = url.includes('nuuls.com') ? 'nuuls' : 'youtube';
+    updateSeekBlocker();
   }
 
-  function getEmbedUrl(url) {
-    const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
-    if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=0&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`;
-    if (url.includes('nuuls.com')) return createVideoPlayerUrl(url);
-    return null;
+  function clearPlayer() {
+    const frame = document.getElementById('player-frame');
+    frame.src = '';
+    frame.style.display = 'none';
+    document.getElementById('player-placeholder').style.display = 'flex';
+    document.getElementById('seek-blocker').classList.remove('active');
   }
 
-  function createVideoPlayerUrl(src) {
-    const html = `<!DOCTYPE html><html><head><style>*{margin:0;padding:0}body{background:#000;display:flex;align-items:center;justify-content:center;height:100vh}video{max-width:100%;max-height:100vh;width:100%}</style></head><body><video controls src="${src}"></video></body></html>`;
-    return URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  function updateSeekBlocker() {
+    const frame   = document.getElementById('player-frame');
+    const blocker = document.getElementById('seek-blocker');
+    if (frame.style.display==='none') { blocker.classList.remove('active'); return; }
+    // Always block progress-bar area for everyone
+    blocker.classList.add('active');
   }
 
-  window.ctrlPlay  = async () => update(ref(db, 'room'), { isPlaying: true });
-  window.ctrlPause = async () => update(ref(db, 'room'), { isPlaying: false });
-
-  window.ctrlSeek = async function(delta) {
-    const snap = await get(ref(db, 'room/seekTo'));
-    const newTime = Math.max(0, (snap.val() || 0) + delta);
-    await update(ref(db, 'room'), { seekTo: newTime, seekTimestamp: Date.now() });
-    showSyncIndicator();
-  };
-
-  function syncPlay() {
+  function doPlay() {
     const frame = document.getElementById('player-frame');
     if (!frame || frame.style.display==='none') return;
-    try { if (playerType==='youtube') frame.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}','*'); } catch {}
+    try { frame.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}','*'); } catch {}
     setStatus('▶ Odtwarzanie','green');
   }
 
-  function syncPause() {
+  function doPause() {
     const frame = document.getElementById('player-frame');
     if (!frame || frame.style.display==='none') return;
-    try { if (playerType==='youtube') frame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}','*'); } catch {}
+    try { frame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}','*'); } catch {}
     setStatus('⏸ Pauza','yellow');
   }
 
-  function syncSeekTo(seconds) {
+  function doSeekTo(s) {
     const frame = document.getElementById('player-frame');
     if (!frame || frame.style.display==='none') return;
-    try { if (playerType==='youtube') frame.contentWindow.postMessage(`{"event":"command","func":"seekTo","args":[${seconds},true]}`,'*'); } catch {}
-    showSyncIndicator();
+    try { frame.contentWindow.postMessage(`{"event":"command","func":"seekTo","args":[${s},true]}`,'*'); } catch {}
+    showSync();
   }
 
-  function showSyncIndicator() {
+  function showSync() {
     const el = document.getElementById('sync-indicator');
-    el.style.display = 'block';
-    clearTimeout(window._syncTimer);
-    window._syncTimer = setTimeout(() => el.style.display='none', 2000);
+    el.style.display='block';
+    clearTimeout(window._st);
+    window._st = setTimeout(()=>el.style.display='none',2000);
   }
 
-  window.toggleViewerSuggest = async function() {
-    if (myRole !== 'host') return;
-    viewerSuggestEnabled = !viewerSuggestEnabled;
-    await update(ref(db,'room'), { viewerSuggest: viewerSuggestEnabled });
-    showToast(viewerSuggestEnabled ? '✓ Sugerowanie włączone' : 'Sugerowanie wyłączone');
+  /* ── PLAYBACK CONTROLS ── */
+  window.ctrlPlay  = async () => update(ref(db,'room'), {isPlaying:true});
+  window.ctrlPause = async () => update(ref(db,'room'), {isPlaying:false});
+
+  window.ctrlSeek = async delta => {
+    const snap = await get(ref(db,'room/seekTo'));
+    const t    = Math.max(0,(snap.val()||0)+delta);
+    await update(ref(db,'room'), {seekTo:t, seekTs:Date.now()});
+    showSync();
   };
 
-  window.toggleViewerPause = async function() {
-    if (myRole !== 'host') return;
+  /* ── HOST TOGGLES ── */
+  window.toggleViewerQueue = async () => {
+    if (myRole!=='host') return;
+    viewerQueueEnabled = !viewerQueueEnabled;
+    await update(ref(db,'room'), {viewerQueue:viewerQueueEnabled});
+    showToast(viewerQueueEnabled?'✓ Kolejkowanie włączone':'Kolejkowanie wyłączone');
+  };
+
+  window.toggleViewerPause = async () => {
+    if (myRole!=='host') return;
     viewerPauseEnabled = !viewerPauseEnabled;
-    await update(ref(db,'room'), { viewerPause: viewerPauseEnabled });
-    showToast(viewerPauseEnabled ? '✓ Widzowie mogą pauzować' : 'Pauzowanie wyłączone');
+    await update(ref(db,'room'), {viewerPause:viewerPauseEnabled});
+    showToast(viewerPauseEnabled?'✓ Widzowie mogą pauzować':'Pauzowanie wyłączone');
   };
 
-  window.sendSuggestion = async function() {
-    const url = document.getElementById('suggest-input').value.trim();
-    if (!url) return;
-    if (!getEmbedUrl(url)) { showToast('Nieobsługiwany link!','error'); return; }
-    await set(ref(db,'suggestion'), { url, nick: myNick, status:'pending', ts: Date.now() });
-    document.getElementById('suggest-input').value = '';
-    showToast('✓ Propozycja wysłana','success');
-  };
+  /* ── HELPERS ── */
+  function extractYtId(url) {
+    const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+    return m ? m[1] : null;
+  }
 
-  window.acceptSuggestion = async function() {
-    if (!currentSuggestion) return;
-    document.getElementById('url-input').value = currentSuggestion;
-    await set(ref(db,'suggestion'), null);
-    await window.loadVideo();
-  };
+  function ytThumb(url) {
+    const id = extractYtId(url);
+    return id ? `https://i.ytimg.com/vi/${id}/mqdefault.jpg` : null;
+  }
 
-  window.dismissSuggestion = async function() {
-    await set(ref(db,'suggestion'), null);
-    document.getElementById('suggestion-notify').classList.remove('visible');
-  };
+  async function fetchYtTitle(ytId) {
+    try {
+      const res  = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${ytId}&format=json`);
+      const data = await res.json();
+      return data.title || ytId;
+    } catch { return ytId; }
+  }
 
-  document.getElementById('viewer-nick').addEventListener('keydown',    e => { if(e.key==='Enter') window.joinAsViewer(); });
-  document.getElementById('host-password').addEventListener('keydown',  e => { if(e.key==='Enter') window.joinAsHost(); });
-  document.getElementById('url-input')?.addEventListener('keydown',     e => { if(e.key==='Enter') window.loadVideo(); });
-  document.getElementById('suggest-input')?.addEventListener('keydown', e => { if(e.key==='Enter') window.sendSuggestion(); });
+  function shortUrl(url) {
+    try { return new URL(url).hostname + '…'; } catch { return url.slice(0,30)+'…'; }
+  }
 
-  onValue(ref(db, '.info/connected'), (snap) => {
-    if (snap.val()===false) setStatus('Brak połączenia z bazą danych','red');
-    else if (myNick) setStatus('Połączono z pokojem','green');
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ── KEYBOARD ── */
+  document.getElementById('viewer-nick').addEventListener('keydown',       e => { if(e.key==='Enter') window.joinAsViewer(); });
+  document.getElementById('host-password').addEventListener('keydown',     e => { if(e.key==='Enter') window.joinAsHost(); });
+  document.getElementById('url-input')?.addEventListener('keydown',        e => { if(e.key==='Enter') window.hostAddToQueue(); });
+  document.getElementById('viewer-url-input')?.addEventListener('keydown', e => { if(e.key==='Enter') window.viewerAddToQueue(); });
+
+  /* ── DB STATUS ── */
+  onValue(ref(db,'.info/connected'), snap => {
+    if (!snap.val()) setStatus('Brak połączenia','red');
+    else if (myNick) setStatus('Połączono','green');
   });
 </script>
 </body>
