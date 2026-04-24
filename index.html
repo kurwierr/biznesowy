@@ -181,7 +181,7 @@
       display:none; background:var(--bg2); border-bottom:1px solid var(--border2); padding:8px 16px;
     }
     #host-add-bar .inner { display:flex; gap:8px; align-items:center; }
-    #host-add-bar.visible { display:block; }
+    #host-add-bar.visible { display:block !important; }
 
     /* ── PLAYER ── */
     .player-wrap {
@@ -802,12 +802,19 @@
     const ytId = extractYtId(url);
     if (!ytId) { showToast('Tylko linki YouTube są obsługiwane','error'); return; }
     const canonUrl = `https://www.youtube.com/watch?v=${ytId}`;
-    const title    = await fetchYtTitle(ytId);
-    await push(ref(db,'playlist'), {
-      url: canonUrl, ytId, title,
-      addedBy: myNick, addedAt: Date.now()
-    });
-    showToast('✓ Dodano do kolejki','success');
+    let title = ytId;
+    try { title = await fetchYtTitle(ytId); } catch {}
+    try {
+      await push(ref(db,'playlist'), {
+        url: canonUrl, ytId, title,
+        addedBy: myNick, addedAt: Date.now()
+      });
+      showToast('✓ Dodano do kolejki','success');
+    } catch(e) {
+      console.error('addToQueue error:', e);
+      showToast('Błąd zapisu do bazy danych','error');
+      return;
+    }
 
     // if nothing playing, start this item (host only)
     if (myRole==='host' && !currentKey) {
@@ -939,7 +946,7 @@
 
   async function fetchYtTitle(ytId) {
     try {
-      const res  = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${ytId}&format=json`);
+      const res  = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${ytId}`);
       const data = await res.json();
       return data.title || ytId;
     } catch { return ytId; }
