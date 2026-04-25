@@ -315,6 +315,38 @@
     .btn-sm.white { background:#fff; color:#000; border-color:#fff; font-weight:600; }
     .btn-sm.white:hover { background:#e5e5e5; border-color:#e5e5e5; }
 
+
+    /* ── VIEWER CLICK BLOCKER (full player) ── */
+    #viewer-blocker {
+      position:absolute; inset:0; z-index:10;
+      display:none; cursor:default; background:transparent;
+    }
+    #viewer-blocker.active { display:block; }
+
+    /* ── VOLUME SLIDER in bottom bar ── */
+    .vol-wrap {
+      display:flex; align-items:center; gap:7px;
+      margin-left:8px; padding-left:12px;
+      border-left:1px solid var(--border2);
+    }
+    .vol-icon { color:var(--text3); display:flex; align-items:center; flex-shrink:0; cursor:pointer; }
+    .vol-icon:hover { color:var(--text2); }
+
+    input[type=range].vol-range {
+      -webkit-appearance:none; appearance:none;
+      width:80px; height:3px; border-radius:2px; outline:none; cursor:pointer;
+      background: linear-gradient(to right, #ccc var(--pct,70%), #333 var(--pct,70%));
+      flex-shrink:0;
+    }
+    input[type=range].vol-range::-webkit-slider-thumb {
+      -webkit-appearance:none; width:12px; height:12px;
+      border-radius:50%; background:#fff; cursor:pointer;
+    }
+    input[type=range].vol-range::-moz-range-thumb {
+      width:12px; height:12px; border:none;
+      border-radius:50%; background:#fff; cursor:pointer;
+    }
+    .vol-pct { font-size:11px; color:var(--text3); width:28px; flex-shrink:0; }
     ::-webkit-scrollbar { width:4px; }
     ::-webkit-scrollbar-track { background:transparent; }
     ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:10px; }
@@ -430,7 +462,8 @@
         <p>Brak aktywnego filmu</p>
       </div>
       <iframe id="player-frame" allowfullscreen allow="autoplay; fullscreen"></iframe>
-      <!-- seek blocker: covers ~bottom 52px where YT progress bar lives -->
+      <!-- full-player blocker for viewers -->
+      <div id="viewer-blocker"></div>
       <div id="sync-indicator">⟳ Synchronizowanie...</div>
     </div>
 
@@ -456,6 +489,20 @@
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,4 15,12 5,20"/><rect x="16" y="4" width="3" height="16"/></svg>
         Pomiń
       </button>
+
+      <!-- volume -->
+      <div class="vol-wrap">
+        <span class="vol-icon" onclick="toggleMute()" title="Wycisz">
+          <svg id="vol-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path id="vol-wave1" d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            <path id="vol-wave2" d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          </svg>
+        </span>
+        <input type="range" class="vol-range" id="vol-range" min="0" max="100" value="70"
+               oninput="onVolInput(this.value)" />
+        <span class="vol-pct" id="vol-pct">70%</span>
+      </div>
     </div>
 
     <!-- STATUS BAR -->
@@ -626,6 +673,7 @@
     listenRoom();
     listenViewers();
     listenPlaylist();
+    initVolume();
     setStatus('Połączono','green');
   }
 
@@ -855,6 +903,8 @@
     frame.onload = () => {
       hostTime = 0;
       startSyncPolling();
+      applyStoredVolume();
+      updateViewerBlocker();
     };
   }
 
@@ -864,6 +914,7 @@
     frame.src = '';
     frame.style.display = 'none';
     document.getElementById('player-placeholder').style.display = 'flex';
+    updateViewerBlocker();
   }
 
 
@@ -1012,6 +1063,93 @@
 
   function escHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+
+  /* ── VOLUME (local, persisted) ── */
+  const VOL_KEY  = 'biz_vol';
+  const MUTE_KEY = 'biz_mute';
+  let isMuted = false;
+  let volBeforeMute = 70;
+
+  function initVolume() {
+    const saved = parseInt(localStorage.getItem(VOL_KEY) || '70', 10);
+    isMuted     = localStorage.getItem(MUTE_KEY) === '1';
+    setVolSlider(isMuted ? 0 : saved, false);
+    if (!isMuted) volBeforeMute = saved;
+  }
+
+  window.onVolInput = function(val) {
+    val = parseInt(val, 10);
+    isMuted = (val === 0);
+    localStorage.setItem(VOL_KEY, val);
+    localStorage.setItem(MUTE_KEY, isMuted ? '1' : '0');
+    if (!isMuted) volBeforeMute = val;
+    setVolSlider(val, true);
+    sendVolToYT(val);
+  };
+
+  window.toggleMute = function() {
+    if (isMuted) {
+      isMuted = false;
+      const v = volBeforeMute || 70;
+      setVolSlider(v, false);
+      sendVolToYT(v);
+      localStorage.setItem(MUTE_KEY, '0');
+    } else {
+      isMuted = true;
+      volBeforeMute = parseInt(document.getElementById('vol-range').value, 10) || 70;
+      setVolSlider(0, false);
+      sendVolToYT(0);
+      localStorage.setItem(MUTE_KEY, '1');
+    }
+  };
+
+  function setVolSlider(val, fromInput) {
+    const range = document.getElementById('vol-range');
+    const pct   = document.getElementById('vol-pct');
+    const w1    = document.getElementById('vol-wave1');
+    const w2    = document.getElementById('vol-wave2');
+    if (!fromInput) range.value = val;
+    range.style.setProperty('--pct', val + '%');
+    pct.textContent = val + '%';
+    if (w1) w1.style.display = val < 1  ? 'none' : '';
+    if (w2) w2.style.display = val < 50 ? 'none' : '';
+  }
+
+  function sendVolToYT(val) {
+    const frame = document.getElementById('player-frame');
+    if (!frame || frame.style.display === 'none') return;
+    try {
+      frame.contentWindow.postMessage(
+        JSON.stringify({event:'command', func:'setVolume', args:[val]}), '*'
+      );
+      if (val === 0) {
+        frame.contentWindow.postMessage(
+          JSON.stringify({event:'command', func:'mute', args:[]}), '*'
+        );
+      } else {
+        frame.contentWindow.postMessage(
+          JSON.stringify({event:'command', func:'unMute', args:[]}), '*'
+        );
+      }
+    } catch {}
+  }
+
+  // Re-apply volume after each iframe load (YT resets to default on load)
+  function applyStoredVolume() {
+    setTimeout(() => {
+      const val = isMuted ? 0 : parseInt(localStorage.getItem(VOL_KEY) || '70', 10);
+      sendVolToYT(val);
+    }, 1500);
+  }
+
+  /* ── VIEWER CLICK BLOCKER ── */
+  function updateViewerBlocker() {
+    const frame   = document.getElementById('player-frame');
+    const blocker = document.getElementById('viewer-blocker');
+    const active  = myRole === 'viewer' && frame && frame.style.display !== 'none';
+    blocker.classList.toggle('active', !!active);
   }
 
   /* ── KEYBOARD ── */
