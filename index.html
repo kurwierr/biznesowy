@@ -130,6 +130,7 @@
       background:#000; position:relative; overflow:hidden;
     }
     #player-frame { width:100%; height:100%; border:none; display:none; }
+    #gif-frame { display:none; max-width:100%; max-height:100%; object-fit:contain; }
     .player-placeholder {
       display:flex; flex-direction:column; align-items:center;
       justify-content:center; gap:14px; color:var(--text3); text-align:center;
@@ -349,7 +350,7 @@
     <div id="add-bar">
       <div class="inner">
         <input id="url-input" class="input-field" style="flex:1;padding:7px 12px;font-size:13px;"
-               type="text" placeholder="Wklej link YouTube..." />
+               type="text" placeholder="Wklej link YouTube lub URL do GIFa..." />
         <button class="btn-sm white" onclick="addToQueue()">+ Dodaj do kolejki</button>
       </div>
     </div>
@@ -364,6 +365,7 @@
         <p>Kolejka jest pusta</p>
       </div>
       <iframe id="player-frame" allowfullscreen allow="autoplay; fullscreen"></iframe>
+      <img id="gif-frame" src="" alt="" style="display:none;max-width:100%;max-height:100%;object-fit:contain;" />
       <!-- blocks clicks on the YT iframe (progress bar etc) -->
       <div id="player-blocker"></div>
     </div>
@@ -526,22 +528,28 @@ window.onAvatarPicked = function(input) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {
-    const img = new Image();
-    img.onload = () => {
-      // Scale to 80x80 via canvas
-      const canvas = document.createElement('canvas');
-      canvas.width = 80; canvas.height = 80;
-      const ctx = canvas.getContext('2d');
-      // crop to square from center
-      const size = Math.min(img.width, img.height);
-      const sx   = (img.width  - size) / 2;
-      const sy   = (img.height - size) / 2;
-      ctx.drawImage(img, sx, sy, size, size, 0, 0, 80, 80);
-      const b64 = canvas.toDataURL('image/jpeg', 0.75);
-      localStorage.setItem(AV_KEY, b64);
-      showAvatarPreview(b64);
-    };
-    img.src = e.target.result;
+    const b64raw = e.target.result;
+    if (file.type === 'image/gif') {
+      // GIF: save as-is to preserve animation
+      localStorage.setItem(AV_KEY, b64raw);
+      showAvatarPreview(b64raw);
+    } else {
+      // Static image: crop & scale to 80x80 via canvas
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 80; canvas.height = 80;
+        const ctx  = canvas.getContext('2d');
+        const size = Math.min(img.width, img.height);
+        const sx   = (img.width  - size) / 2;
+        const sy   = (img.height - size) / 2;
+        ctx.drawImage(img, sx, sy, size, size, 0, 0, 80, 80);
+        const b64 = canvas.toDataURL('image/jpeg', 0.75);
+        localStorage.setItem(AV_KEY, b64);
+        showAvatarPreview(b64);
+      };
+      img.src = b64raw;
+    }
   };
   reader.readAsDataURL(file);
 };
@@ -628,7 +636,11 @@ function listenRoom() {
       currentKey = data.currentKey ?? null;
       renderPlaylist();
       if (currentKey && playlist[currentKey]) {
-        loadYT(playlist[currentKey].url);
+        const item = playlist[currentKey];
+        loadMedia(item);
+        const isGif = item.type==='gif' || isGifUrl(item.url);
+        ['btn-play','btn-pause','btn-seek-back','btn-seek-fwd']
+          .forEach(id => { document.getElementById(id).disabled = isGif; });
       } else if (!currentKey) {
         clearPlayer();
       }
@@ -721,16 +733,22 @@ window.addToQueue = async () => {
   const url = document.getElementById('url-input').value.trim();
   if (!url) { showToast('Wklej link!','error'); return; }
   const ytId = extractYtId(url);
-  if (!ytId) { showToast('Tylko linki YouTube są obsługiwane','error'); return; }
-  const canonUrl = `https://www.youtube.com/watch?v=${ytId}`;
-  let title = ytId;
+  const isGif = isGifUrl(url);
+  if (!ytId && !isGif) { showToast('Podaj link YouTube lub bezpośredni URL do GIFa (.gif)','error'); return; }
+  let canonUrl, title, ytId2, type;
+  if (isGif) {
+    canonUrl = url; title = url.split('/').pop().split('?')[0] || 'GIF'; ytId2 = null; type = 'gif';
+  } else {
+    canonUrl = `https://www.youtube.com/watch?v=${ytId}`; ytId2 = ytId; type = 'youtube';
+    title = ytId;
+    try {
+      const res  = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(canonUrl)}`);
+      const data = await res.json();
+      if (data.title) title = data.title;
+    } catch {}
+  }
   try {
-    const res  = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(canonUrl)}`);
-    const data = await res.json();
-    if (data.title) title = data.title;
-  } catch {}
-  try {
-    await push(ref(db,'playlist'), { url:canonUrl, ytId, title, addedBy:myNick, addedAt:Date.now() });
+    await push(ref(db,'playlist'), { url:canonUrl, ytId:ytId2||null, type, title, addedBy:myNick, addedAt:Date.now() });
     document.getElementById('url-input').value = '';
     showToast('✓ Dodano do kolejki','success');
   } catch(e) {
@@ -763,23 +781,38 @@ window.removeFromQueue = async key => {
 };
 
 /* ── PLAYER ── */
-function loadYT(url) {
-  const ytId = extractYtId(url);
-  if (!ytId) return;
-  const frame    = document.getElementById('player-frame');
-  const embedUrl = `https://www.youtube.com/embed/${ytId}?autoplay=0&enablejsapi=1&origin=${encodeURIComponent(location.origin)}&rel=0`;
-  if (frame.src === embedUrl) return;
-  frame.src = embedUrl;
-  frame.style.display = 'block';
+function loadMedia(item) {
+  const frame   = document.getElementById('player-frame');
+  const gifEl   = document.getElementById('gif-frame');
+  const blocker = document.getElementById('player-blocker');
   document.getElementById('player-placeholder').style.display = 'none';
-  // blocker always active (everyone uses buttons)
-  document.getElementById('player-blocker').classList.add('active');
-  frame.onload = () => applyStoredVolume();
+
+  if (item.type === 'gif' || isGifUrl(item.url)) {
+    // GIF — simple img tag, no controls needed
+    frame.style.display = 'none'; frame.src = '';
+    gifEl.src = item.url;
+    gifEl.style.display = 'block';
+    blocker.classList.remove('active'); // no iframe to block
+    setStatus('🎞 GIF','green');
+  } else {
+    // YouTube
+    const ytId = item.ytId || extractYtId(item.url);
+    if (!ytId) return;
+    const embedUrl = `https://www.youtube.com/embed/${ytId}?autoplay=0&enablejsapi=1&origin=${encodeURIComponent(location.origin)}&rel=0`;
+    gifEl.style.display = 'none'; gifEl.src = '';
+    if (frame.src === embedUrl) return;
+    frame.src = embedUrl;
+    frame.style.display = 'block';
+    blocker.classList.add('active');
+    frame.onload = () => applyStoredVolume();
+  }
 }
 
 function clearPlayer() {
   const frame = document.getElementById('player-frame');
+  const gifEl = document.getElementById('gif-frame');
   frame.src = ''; frame.style.display = 'none';
+  gifEl.src = ''; gifEl.style.display = 'none';
   document.getElementById('player-placeholder').style.display = 'flex';
   document.getElementById('player-blocker').classList.remove('active');
 }
@@ -877,11 +910,16 @@ function applyStoredVolume() {
 }
 
 /* ── HELPERS ── */
+function isGifUrl(url) {
+  return /\.gif(\?|$)/i.test(url) || url.includes('tenor.com/view') || url.includes('giphy.com/media') || url.includes('giphy.com/gifs');
+}
+
 function extractYtId(url) {
   const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
   return m ? m[1] : null;
 }
 function ytThumb(url) {
+  if (isGifUrl(url)) return url; // use gif itself as thumbnail
   const id = extractYtId(url);
   return id ? `https://i.ytimg.com/vi/${id}/mqdefault.jpg` : null;
 }
