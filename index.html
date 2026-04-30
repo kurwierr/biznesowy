@@ -296,6 +296,33 @@
       font-size:11px; font-weight:600; color:var(--text2); flex-shrink:0;
     }
     .badge-av img { width:100%; height:100%; object-fit:cover; }
+
+    /* ── HISTORY PANEL (tab inside playlist panel) ── */
+    .panel-tabs {
+      display:flex; border-bottom:1px solid var(--border2); flex-shrink:0;
+    }
+    .panel-tab {
+      flex:1; padding:9px 0; font-size:11px; color:var(--text3);
+      text-align:center; cursor:pointer; letter-spacing:.5px;
+      text-transform:uppercase; font-weight:600; transition:all .15s;
+      border-bottom:2px solid transparent; margin-bottom:-1px;
+    }
+    .panel-tab:hover { color:var(--text2); }
+    .panel-tab.active { color:var(--text); border-bottom-color:var(--text); }
+
+    /* ── GLOBAL ACTION TOAST (who did what) ── */
+    #action-toast {
+      position:fixed; top:60px; left:50%;
+      transform:translateX(-50%) translateY(-20px);
+      background:rgba(20,20,20,0.92); border:1px solid var(--border);
+      border-radius:20px; padding:7px 16px;
+      font-size:12px; color:var(--text2);
+      transition:transform .25s cubic-bezier(.34,1.56,.64,1), opacity .25s;
+      opacity:0; z-index:1500; pointer-events:none;
+      backdrop-filter:blur(10px); white-space:nowrap;
+      box-shadow:0 4px 20px rgba(0,0,0,.5);
+    }
+    #action-toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
     ::-webkit-scrollbar { width:4px; }
     ::-webkit-scrollbar-track { background:transparent; }
     ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:10px; }
@@ -428,18 +455,26 @@
 
   <!-- PLAYLIST PANEL -->
   <div id="playlist-panel">
-    <div class="playlist-header">
-      <span class="playlist-title">Kolejka</span>
-      <span class="playlist-count" id="pl-count">0 filmów</span>
+    <div class="panel-tabs">
+      <div class="panel-tab active" id="tab-queue" onclick="switchTab('queue')">
+        Kolejka <span id="pl-count" style="opacity:.5"></span>
+      </div>
+      <div class="panel-tab" id="tab-history" onclick="switchTab('history')">
+        Historia
+      </div>
     </div>
     <div class="playlist-list" id="playlist-list">
       <div class="playlist-empty">Kolejka jest pusta.<br>Dodaj film, żeby zacząć.</div>
+    </div>
+    <div class="playlist-list" id="history-list" style="display:none">
+      <div class="playlist-empty">Brak historii.</div>
     </div>
   </div>
 
 </div><!-- #app -->
 
 <div id="toast"></div>
+<div id="action-toast"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -468,6 +503,7 @@ let playlist   = {};
 let lastSeekTime = 0;
 let isMuted = false;
 let volBeforeMute = 70;
+let activeTab = 'queue';
 
 /* ── UTILS ── */
 const genId = () => Math.random().toString(36).slice(2,10);
@@ -610,8 +646,106 @@ window.joinRoom = async () => {
   listenRoom();
   listenViewers();
   listenPlaylist();
+  listenHistory();
+  listenActions();
   setStatus('Połączono','green');
 };
+
+
+/* ── ACTION TOAST (global — shown to everyone) ── */
+function listenActions() {
+  onValue(ref(db,'lastAction'), snap => {
+    const d = snap.val();
+    if (!d || !d.msg || !d.ts) return;
+    // only show if recent (within 5s of now)
+    if (Date.now() - d.ts > 5000) return;
+    showActionToast(d.msg);
+  });
+}
+
+function showActionToast(msg) {
+  const el = document.getElementById('action-toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(window._att);
+  window._att = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+async function writeAction(msg) {
+  await update(ref(db,'lastAction'), { msg, ts: Date.now() });
+}
+
+/* ── TAB SWITCH ── */
+window.switchTab = function(tab) {
+  activeTab = tab;
+  document.getElementById('tab-queue').classList.toggle('active', tab==='queue');
+  document.getElementById('tab-history').classList.toggle('active', tab==='history');
+  document.getElementById('playlist-list').style.display  = tab==='queue'   ? 'block' : 'none';
+  document.getElementById('history-list').style.display   = tab==='history' ? 'block' : 'none';
+};
+
+/* ── HISTORY ── */
+const HIST_MAX = 30;
+
+function listenHistory() {
+  onValue(ref(db,'history'), snap => {
+    renderHistory(snap.val() || {});
+  });
+}
+
+function renderHistory(hist) {
+  const list = document.getElementById('history-list');
+  const entries = Object.entries(hist)
+    .sort((a,b) => (b[1].playedAt||0) - (a[1].playedAt||0));
+
+  if (!entries.length) {
+    list.innerHTML = '<div class="playlist-empty">Brak historii.</div>';
+    return;
+  }
+
+  list.innerHTML = entries.map(([key, item]) => {
+    const thumb = ytThumb(item.url);
+    return `
+    <div class="pl-item">
+      <div style="width:6px;flex-shrink:0"></div>
+      <div class="pl-thumb">
+        ${thumb
+          ? `<img src="${thumb}" loading="lazy" alt="" />`
+          : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:.3"><polygon points="5,3 19,12 5,21"/></svg>`
+        }
+      </div>
+      <div class="pl-info">
+        <div class="pl-title">${escHtml(item.title||'Film')}</div>
+        <div class="pl-sub">${item.addedBy ? escHtml(item.addedBy) : ''}</div>
+      </div>
+      <div class="pl-actions">
+        <button class="pl-action-btn" onclick="replayFromHistory(${JSON.stringify(JSON.stringify(item))})" title="Dodaj ponownie">+</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.replayFromHistory = async function(itemJson) {
+  const item = JSON.parse(itemJson);
+  await push(ref(db,'playlist'), { ...item, addedBy: myNick, addedAt: Date.now() });
+  showToast('✓ Dodano do kolejki','success');
+  switchTab('queue');
+};
+
+async function addToHistory(item) {
+  if (!item) return;
+  // push to history, then trim to HIST_MAX
+  const newRef = push(ref(db,'history'));
+  await set(newRef, { ...item, playedAt: Date.now() });
+  // trim oldest if over limit
+  const snap = await get(ref(db,'history'));
+  const entries = Object.entries(snap.val()||{})
+    .sort((a,b) => (a[1].playedAt||0) - (b[1].playedAt||0));
+  if (entries.length > HIST_MAX) {
+    const toDelete = entries.slice(0, entries.length - HIST_MAX);
+    for (const [k] of toDelete) await remove(ref(db,`history/${k}`));
+  }
+}
 
 /* ── ROOM LISTENER ── */
 function listenRoom() {
@@ -633,6 +767,10 @@ function listenRoom() {
 
     // current track
     if (data.currentKey !== currentKey) {
+      // save old track to history before switching
+      if (currentKey && playlist[currentKey] && !data.currentKey) {
+        addToHistory(playlist[currentKey]);
+      }
       currentKey = data.currentKey ?? null;
       renderPlaylist();
       if (currentKey && playlist[currentKey]) {
@@ -690,10 +828,10 @@ function sortedKeys() {
 
 function renderPlaylist() {
   const list  = document.getElementById('playlist-list');
-  const count = document.getElementById('pl-count');
   const keys  = sortedKeys();
 
-  count.textContent = keys.length + (keys.length===1?' film':' filmów');
+  const count = document.getElementById('pl-count');
+  count.textContent = keys.length ? `(${keys.length})` : '';
 
   if (!keys.length) {
     list.innerHTML = '<div class="playlist-empty">Kolejka jest pusta.<br>Dodaj film, żeby zacząć.</div>';
@@ -751,6 +889,7 @@ window.addToQueue = async () => {
     await push(ref(db,'playlist'), { url:canonUrl, ytId:ytId2||null, type, title, addedBy:myNick, addedAt:Date.now() });
     document.getElementById('url-input').value = '';
     showToast('✓ Dodano do kolejki','success');
+    await writeAction(`➕ ${myNick} dodał: ${title}`);
   } catch(e) {
     showToast('Błąd zapisu — sprawdź reguły Firebase','error');
   }
@@ -763,9 +902,14 @@ window.advanceToKey = async key => {
 
 window.ctrlSkip = async () => {
   if (!currentKey) return;
-  const keys = sortedKeys();
-  const idx  = keys.indexOf(currentKey);
-  const next = keys[idx+1] ?? null;
+  const keys    = sortedKeys();
+  const idx     = keys.indexOf(currentKey);
+  const next    = keys[idx+1] ?? null;
+  const skipped = playlist[currentKey];
+  if (skipped) {
+    await addToHistory(skipped);
+    await writeAction(`⏭ ${myNick} pominął: ${skipped.title||'Film'}`);
+  }
   await remove(ref(db,`playlist/${currentKey}`));
   if (next) {
     await update(ref(db,'room'), { currentKey:next, isPlaying:false, seekTo:0 });
