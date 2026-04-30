@@ -346,16 +346,16 @@
         </div>
         <img id="av-preview" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;" />
       </div>
-      <div class="avatar-pick-label">Kliknij żeby dodać<br>zdjęcie profilowe<br><span style="color:var(--text3);font-size:11px;">(opcjonalne)</span></div>
+      <div class="avatar-pick-label">Click to add<br>a profile picture<br><span style="color:var(--text3);font-size:11px;">(optional)</span></div>
     </div>
     <input type="file" id="avatar-file" accept="image/*" style="display:none" onchange="onAvatarPicked(this)" />
 
     <div class="input-group">
-      <label class="input-label">Nick</label>
+      <label class="input-label">Nickname</label>
       <div class="saved-nicks" id="saved-nicks"></div>
       <input class="input-field" id="nick-input" type="text" maxlength="20" autocomplete="off" />
     </div>
-    <button class="btn-primary" id="join-btn" onclick="joinRoom()">Wejdź</button>
+    <button class="btn-primary" id="join-btn" onclick="joinRoom()">Enter</button>
     <div class="error-msg" id="join-error"></div>
   </div>
 </div>
@@ -377,7 +377,7 @@
     <div id="add-bar">
       <div class="inner">
         <input id="url-input" class="input-field" style="flex:1;padding:7px 12px;font-size:13px;"
-               type="text" placeholder="Wklej link YouTube lub URL do GIFa..." />
+               type="text" placeholder="Paste a YouTube link or GIF URL..." />
         <button class="btn-sm white" onclick="addToQueue()">+ Dodaj do kolejki</button>
       </div>
     </div>
@@ -389,7 +389,7 @@
           <rect x="2" y="3" width="20" height="14" rx="2"/>
           <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
         </svg>
-        <p>Kolejka jest pusta</p>
+        <p>Queue is empty</p>
       </div>
       <iframe id="player-frame" allowfullscreen allow="autoplay; fullscreen"></iframe>
       <img id="gif-frame" src="" alt="" style="display:none;max-width:100%;max-height:100%;object-fit:contain;" />
@@ -407,7 +407,7 @@
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
           <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
         </svg>
-        Pauza
+        Pause
       </button>
       <button class="ctrl-btn" id="btn-seek-back" onclick="ctrlSeek(-10)" disabled>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -425,14 +425,14 @@
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
           <polygon points="5,4 15,12 5,20"/><rect x="16" y="4" width="3" height="16"/>
         </svg>
-        Pomiń
+        Skip
       </button>
 
       <div style="flex:1"></div>
 
       <!-- volume -->
       <div class="vol-wrap">
-        <span class="vol-icon" onclick="toggleMute()" title="Wycisz">
+        <span class="vol-icon" onclick="toggleMute()" title="Mute">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
             <path id="vol-wave1" d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
@@ -448,7 +448,7 @@
     <!-- STATUS BAR -->
     <div class="status-bar">
       <div class="status-dot" id="status-dot"></div>
-      <span id="status-text">Łączenie...</span>
+      <span id="status-text">Connecting...</span>
     </div>
 
   </div><!-- #main-col -->
@@ -457,22 +457,22 @@
   <div id="playlist-panel">
     <div class="panel-tabs">
       <div class="panel-tab active" id="tab-queue" onclick="switchTab('queue')">
-        Kolejka <span id="pl-count" style="opacity:.5"></span>
+        Queue <span id="pl-count" style="opacity:.5"></span>
       </div>
       <div class="panel-tab" id="tab-history" onclick="switchTab('history')">
-        Historia
+        History
       </div>
     </div>
     <div id="history-toolbar" style="display:none;padding:6px 14px;border-bottom:1px solid var(--border2);flex-shrink:0;">
       <button class="pl-action-btn del" style="font-size:11px;color:var(--text3);padding:4px 8px;" onclick="clearHistory()">
-        🗑 Wyczyść historię
+        🗑 Clear history
       </button>
     </div>
     <div class="playlist-list" id="playlist-list">
-      <div class="playlist-empty">Kolejka jest pusta.<br>Dodaj film, żeby zacząć.</div>
+      <div class="playlist-empty">Queue is empty.<br>Dodaj film, żeby zacząć.</div>
     </div>
     <div class="playlist-list" id="history-list" style="display:none">
-      <div class="playlist-empty">Brak historii.</div>
+      <div class="playlist-empty">No history yet.</div>
     </div>
   </div>
 
@@ -509,6 +509,8 @@ let lastSeekTime = 0;
 let isMuted = false;
 let volBeforeMute = 70;
 let activeTab = 'queue';
+let localPlaybackTime = 0;  // tracks current playback position locally
+let _playbackTimer = null;
 
 /* ── UTILS ── */
 const genId = () => Math.random().toString(36).slice(2,10);
@@ -612,7 +614,7 @@ function getMyAvatar() {
 /* ── JOIN ── */
 window.joinRoom = async () => {
   const nick = document.getElementById('nick-input').value.trim();
-  if (!nick) { document.getElementById('join-error').textContent='Wpisz nick!'; return; }
+  if (!nick) { document.getElementById('join-error').textContent='Enter a nickname!'; return; }
   const btn = document.getElementById('join-btn');
   btn.disabled = true;
   myNick = nick; myId = genId();
@@ -623,7 +625,7 @@ window.joinRoom = async () => {
     const avatar = getMyAvatar();
     await set(vRef, { nick, avatar: avatar||null, joinedAt: Date.now(), lastSeen: Date.now() });
   } catch(e) {
-    document.getElementById('join-error').textContent = 'Błąd połączenia z bazą.';
+    document.getElementById('join-error').textContent = 'Database connection error.';
     btn.disabled = false; return;
   }
 
@@ -653,7 +655,7 @@ window.joinRoom = async () => {
   listenPlaylist();
   listenHistory();
   listenActions();
-  setStatus('Połączono','green');
+  setStatus('Connected','green');
 };
 
 
@@ -709,7 +711,7 @@ function renderHistory(hist) {
     .sort((a,b) => (b[1].playedAt||0) - (a[1].playedAt||0));
 
   if (!entries.length) {
-    list.innerHTML = '<div class="playlist-empty">Brak historii.</div>';
+    list.innerHTML = '<div class="playlist-empty">No history yet.</div>';
     return;
   }
 
@@ -725,11 +727,11 @@ function renderHistory(hist) {
         }
       </div>
       <div class="pl-info">
-        <div class="pl-title">${escHtml(item.title||'Film')}</div>
+        <div class="pl-title">${escHtml(item.title||'Video')}</div>
         <div class="pl-sub">${item.addedBy ? escHtml(item.addedBy) : ''}</div>
       </div>
       <div class="pl-actions">
-        <button class="pl-action-btn" data-histkey="${key}" onclick="replayFromHistory(this)" title="Dodaj ponownie">+</button>
+        <button class="pl-action-btn" data-histkey="${key}" onclick="replayFromHistory(this)" title="Add again">+</button>
       </div>
     </div>`;
   }).join('');
@@ -738,16 +740,16 @@ function renderHistory(hist) {
 window.replayFromHistory = async function(btn) {
   const key  = btn.dataset.histkey;
   const item = historyCache[key];
-  if (!item) { showToast('Błąd — odśwież stronę','error'); return; }
+  if (!item) { showToast('Error — refresh the page','error'); return; }
   const { playedAt, ...itemClean } = item;
   await push(ref(db,'playlist'), { ...itemClean, addedBy: myNick, addedAt: Date.now() });
-  showToast('✓ Dodano do kolejki','success');
+  showToast('✓ Added to queue','success');
   switchTab('queue');
 };
 
 window.clearHistory = async function() {
   await remove(ref(db,'history'));
-  showToast('Historia wyczyszczona');
+  showToast('History wyczyszczona');
 };
 
 async function addToHistory(item) {
@@ -852,7 +854,7 @@ function renderPlaylist() {
   count.textContent = keys.length ? `(${keys.length})` : '';
 
   if (!keys.length) {
-    list.innerHTML = '<div class="playlist-empty">Kolejka jest pusta.<br>Dodaj film, żeby zacząć.</div>';
+    list.innerHTML = '<div class="playlist-empty">Queue is empty.<br>Dodaj film, żeby zacząć.</div>';
     return;
   }
 
@@ -873,12 +875,12 @@ function renderPlaylist() {
         }
       </div>
       <div class="pl-info">
-        <div class="pl-title">${escHtml(item.title||item.ytId||'Film')}</div>
-        ${item.addedBy ? `<div class="pl-sub">dodał: ${escHtml(item.addedBy)}</div>` : ''}
+        <div class="pl-title">${escHtml(item.title||item.ytId||'Video')}</div>
+        ${item.addedBy ? `<div class="pl-sub">added by: ${escHtml(item.addedBy)}</div>` : ''}
       </div>
       <div class="pl-actions">
-        ${!isActive ? `<button class="pl-action-btn" onclick="advanceToKey('${key}')" title="Odtwórz teraz">▶</button>` : ''}
-        <button class="pl-action-btn del" onclick="removeFromQueue('${key}')" title="Usuń">✕</button>
+        ${!isActive ? `<button class="pl-action-btn" onclick="advanceToKey('${key}')" title="Play now">▶</button>` : ''}
+        <button class="pl-action-btn del" onclick="removeFromQueue('${key}')" title="Remove">✕</button>
       </div>
     </div>`;
   }).join('');
@@ -890,7 +892,7 @@ window.addToQueue = async () => {
   if (!url) { showToast('Wklej link!','error'); return; }
   const ytId = extractYtId(url);
   const isGif = isGifUrl(url);
-  if (!ytId && !isGif) { showToast('Podaj link YouTube lub bezpośredni URL do GIFa (.gif)','error'); return; }
+  if (!ytId && !isGif) { showToast('Paste a YouTube link or direct GIF URL (.gif)','error'); return; }
   let canonUrl, title, ytId2, type;
   if (isGif) {
     canonUrl = url; title = url.split('/').pop().split('?')[0] || 'GIF'; ytId2 = null; type = 'gif';
@@ -906,10 +908,10 @@ window.addToQueue = async () => {
   try {
     await push(ref(db,'playlist'), { url:canonUrl, ytId:ytId2||null, type, title, addedBy:myNick, addedAt:Date.now() });
     document.getElementById('url-input').value = '';
-    showToast('✓ Dodano do kolejki','success');
-    await writeAction(`➕ ${myNick} dodał: ${title}`);
+    showToast('✓ Added to queue','success');
+    await writeAction(`➕ ${myNick} added by: ${title}`);
   } catch(e) {
-    showToast('Błąd zapisu — sprawdź reguły Firebase','error');
+    showToast('Write error — check Firebase rules','error');
   }
 };
 
@@ -926,7 +928,7 @@ window.ctrlSkip = async () => {
   const skipped = playlist[currentKey];
   if (skipped) {
     await addToHistory(skipped);
-    await writeAction(`⏭ ${myNick} pominął: ${skipped.title||'Film'}`);
+    await writeAction(`⏭ ${myNick} skipped: ${skipped.title||'Video'}`);
   }
   await remove(ref(db,`playlist/${currentKey}`));
   if (next) {
@@ -939,7 +941,7 @@ window.ctrlSkip = async () => {
 window.removeFromQueue = async key => {
   if (key === currentKey) { await window.ctrlSkip(); return; }
   await remove(ref(db,`playlist/${key}`));
-  showToast('Usunięto z kolejki');
+  showToast('Removed from queue');
 };
 
 /* ── PLAYER ── */
@@ -977,26 +979,37 @@ function clearPlayer() {
   gifEl.src = ''; gifEl.style.display = 'none';
   document.getElementById('player-placeholder').style.display = 'flex';
   document.getElementById('player-blocker').classList.remove('active');
+  localPlaybackTime = 0;
+  if (_playbackTimer) { clearInterval(_playbackTimer); _playbackTimer = null; }
 }
 
 function doPlay() {
   const frame = document.getElementById('player-frame');
   if (!frame || frame.style.display==='none') return;
   try { frame.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}','*'); } catch {}
-  setStatus('▶ Odtwarzanie','green');
+  setStatus('▶ Playing','green');
+  if (_playbackTimer) clearInterval(_playbackTimer);
+  _playbackTimer = setInterval(() => { localPlaybackTime += 0.25; }, 250);
 }
 
 function doPause() {
   const frame = document.getElementById('player-frame');
   if (!frame || frame.style.display==='none') return;
   try { frame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}','*'); } catch {}
-  setStatus('⏸ Pauza','yellow');
+  setStatus('⏸ Pause','yellow');
+  if (_playbackTimer) { clearInterval(_playbackTimer); _playbackTimer = null; }
 }
 
 function doSeekTo(s) {
   const frame = document.getElementById('player-frame');
   if (!frame || frame.style.display==='none') return;
   try { frame.contentWindow.postMessage(`{"event":"command","func":"seekTo","args":[${s},true]}`,'*'); } catch {}
+  localPlaybackTime = s;
+  // restart timer if currently playing
+  if (isPlaying) {
+    if (_playbackTimer) clearInterval(_playbackTimer);
+    _playbackTimer = setInterval(() => { localPlaybackTime += 0.25; }, 250);
+  }
 }
 
 /* ── PLAYBACK CONTROLS ── */
@@ -1004,8 +1017,7 @@ window.ctrlPlay  = async () => update(ref(db,'room'), { isPlaying:true });
 window.ctrlPause = async () => update(ref(db,'room'), { isPlaying:false });
 
 window.ctrlSeek = async delta => {
-  const snap = await get(ref(db,'room/seekTo'));
-  const t    = Math.max(0,(snap.val()||0)+delta);
+  const t = Math.max(0, localPlaybackTime + delta);
   await update(ref(db,'room'), { seekTo:t, seekTs:Date.now() });
 };
 
@@ -1092,8 +1104,8 @@ document.getElementById('url-input')?.addEventListener('keydown', e => { if(e.ke
 
 /* ── DB STATUS ── */
 onValue(ref(db,'.info/connected'), snap => {
-  if (!snap.val()) setStatus('Brak połączenia','red');
-  else if (myNick)  setStatus('Połączono','green');
+  if (!snap.val()) setStatus('Disconnected','red');
+  else if (myNick)  setStatus('Connected','green');
 });
 </script>
 </body>
