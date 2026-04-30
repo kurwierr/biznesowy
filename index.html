@@ -463,6 +463,11 @@
         Historia
       </div>
     </div>
+    <div id="history-toolbar" style="display:none;padding:6px 14px;border-bottom:1px solid var(--border2);flex-shrink:0;">
+      <button class="pl-action-btn del" style="font-size:11px;color:var(--text3);padding:4px 8px;" onclick="clearHistory()">
+        🗑 Wyczyść historię
+      </button>
+    </div>
     <div class="playlist-list" id="playlist-list">
       <div class="playlist-empty">Kolejka jest pusta.<br>Dodaj film, żeby zacząć.</div>
     </div>
@@ -680,8 +685,9 @@ window.switchTab = function(tab) {
   activeTab = tab;
   document.getElementById('tab-queue').classList.toggle('active', tab==='queue');
   document.getElementById('tab-history').classList.toggle('active', tab==='history');
-  document.getElementById('playlist-list').style.display  = tab==='queue'   ? 'block' : 'none';
-  document.getElementById('history-list').style.display   = tab==='history' ? 'block' : 'none';
+  document.getElementById('playlist-list').style.display   = tab==='queue'   ? 'block' : 'none';
+  document.getElementById('history-list').style.display    = tab==='history' ? 'block' : 'none';
+  document.getElementById('history-toolbar').style.display = tab==='history' ? 'block' : 'none';
 };
 
 /* ── HISTORY ── */
@@ -693,7 +699,11 @@ function listenHistory() {
   });
 }
 
+// store history entries by key for lookup
+let historyCache = {};
+
 function renderHistory(hist) {
+  historyCache = hist;
   const list = document.getElementById('history-list');
   const entries = Object.entries(hist)
     .sort((a,b) => (b[1].playedAt||0) - (a[1].playedAt||0));
@@ -719,17 +729,25 @@ function renderHistory(hist) {
         <div class="pl-sub">${item.addedBy ? escHtml(item.addedBy) : ''}</div>
       </div>
       <div class="pl-actions">
-        <button class="pl-action-btn" onclick="replayFromHistory(${JSON.stringify(JSON.stringify(item))})" title="Dodaj ponownie">+</button>
+        <button class="pl-action-btn" data-histkey="${key}" onclick="replayFromHistory(this)" title="Dodaj ponownie">+</button>
       </div>
     </div>`;
   }).join('');
 }
 
-window.replayFromHistory = async function(itemJson) {
-  const item = JSON.parse(itemJson);
-  await push(ref(db,'playlist'), { ...item, addedBy: myNick, addedAt: Date.now() });
+window.replayFromHistory = async function(btn) {
+  const key  = btn.dataset.histkey;
+  const item = historyCache[key];
+  if (!item) { showToast('Błąd — odśwież stronę','error'); return; }
+  const { playedAt, ...itemClean } = item;
+  await push(ref(db,'playlist'), { ...itemClean, addedBy: myNick, addedAt: Date.now() });
   showToast('✓ Dodano do kolejki','success');
   switchTab('queue');
+};
+
+window.clearHistory = async function() {
+  await remove(ref(db,'history'));
+  showToast('Historia wyczyszczona');
 };
 
 async function addToHistory(item) {
